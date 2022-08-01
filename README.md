@@ -1,3 +1,10 @@
+About the project 
+Rent Bay Sale Real Estate is React project you can register and you can list your home or aparment for rent or for sale.
+For backend and for everything is standing FireBase platform (database authentication and file storage )
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
