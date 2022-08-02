@@ -1,22 +1,48 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { ReactComponent as ArrowRightIcon } from "../assets/svg/keyboardArrowRightIcon.svg";
 import visibilityIcon from "../assets/svg/visibilityIcon.svg";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { db } from "../firebase.config";
 
 function SignUp() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name:'',
+    name: "",
     email: "",
     password: "",
   });
 
-  const { name , email, password } = formData;
+  const { name, email, password } = formData;
   const onChange = (e) => {
     setFormData((prevState) => ({
       ...prevState,
       [e.target.id]: e.target.value,
     }));
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const auth = getAuth();
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+      updateProfile(auth.currentUser, {
+        displayName: name
+      });
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -26,8 +52,8 @@ function SignUp() {
           <p className="pageHeader">Walcome!</p>
         </header>
 
-        <from>
-        <input
+        <form onSubmit={handleSubmit}>
+          <input
             type="text"
             className="nameInput"
             placeholder="Name"
@@ -64,11 +90,11 @@ function SignUp() {
           </Link>
           <div className="signInBar">
             <p className="singInText">Sign Up</p>
-            <button className="signInButton">
+            <button className="signInButton" type="submit">
               <ArrowRightIcon fill="#ffffff" width="34px" height="34px" />
             </button>
           </div>
-        </from>
+        </form>
 
         {/* Google OAuth */}
         <Link to="/sign-in" className="registerLink">

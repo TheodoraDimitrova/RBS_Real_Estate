@@ -35,13 +35,13 @@ function Navbar() {
             />
             <p className={pathMatchRoute("/offers") ? "navbarListItemNameActive" : "navbarListItemName"}>Offers</p>
           </li>
-          <li className="navbarListItem" onClick={() => navigate("/signIn")}>
+          <li className="navbarListItem" onClick={() => navigate("/sign-in")}>
             <PersonOutlineIcon
-              fill={pathMatchRoute("/signIn") ? "#2c2c2c" : "#8f8f8f"}
+              fill={pathMatchRoute("/sign-in") ? "#2c2c2c" : "#8f8f8f"}
               width="36px"
               height="36px"
             />
-            <p className={pathMatchRoute("/signIn") ? "navbarListItemNameActive" : "navbarListItemName"}>Profile</p>
+            <p className={pathMatchRoute("/sign-in") ? "navbarListItemNameActive" : "navbarListItemName"}>Profile</p>
           </li>
         </ul>
       </nav>

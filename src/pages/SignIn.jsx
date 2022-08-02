@@ -26,7 +26,7 @@ function SingIn() {
           <p className="pageHeader">Walcome Back!</p>
         </header>
 
-        <from>
+        <form>
         
           <input
             type="email"
@@ -61,7 +61,7 @@ function SingIn() {
               <ArrowRightIcon fill="#ffffff" width="34px" height="34px" />
             </button>
           </div>
-        </from>
+        </form>
 
         {/* Google OAuth */}
         <Link to="/sign-up" className="registerLink">
