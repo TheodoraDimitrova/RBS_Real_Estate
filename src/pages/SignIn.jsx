@@ -4,6 +4,7 @@ import { ReactComponent as ArrowRightIcon } from "../assets/svg/keyboardArrowRig
 import visibilityIcon from "../assets/svg/visibilityIcon.svg";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { toast } from "react-toastify";
+import OAuth from "../components/OAuth";
 
 function SingIn() {
   const navigate = useNavigate();
@@ -31,14 +32,17 @@ function SingIn() {
         password
       );
       if (userCredential.user) {
-        console.log("redirect");
         navigate("/profile");
         toast.success("Hey 👋, you are loged in!");
       }
     } catch (error) {
-      //auth/wrong-password
-      console.log(error.code);
-      toast.error(error.message);
+      //error.code
+      if (error.code === "auth/wrong-password") {
+        toast.error("Wrong password!");
+      }
+      if (error.code === "auth/user-not-found") {
+        toast.error("You are not registrated!");
+      }
     }
   };
 
@@ -85,7 +89,7 @@ function SingIn() {
           </div>
         </form>
 
-        {/* Google OAuth */}
+        <OAuth />
         <Link to="/sign-up" className="registerLink">
           Sign Up Instead
         </Link>
