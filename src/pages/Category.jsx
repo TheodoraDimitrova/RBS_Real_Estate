@@ -10,6 +10,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import ListingItem from "../components/ListingItem";
 import Spinner from "../components/Spinner";
 import { db } from "../firebase.config";
 
@@ -61,8 +62,13 @@ export default function Category() {
         <>
           <main>
             <ul className="categoryListings">
-              {listings.map((item, index) => (
-                <h3 key="index">{item.data.name}</h3>
+              {listings.map((item) => (
+                <ListingItem
+                  key={item.id}
+                  listing={item.data}
+                  id={item.id}
+                  onDelete={(id, name) => console.log(id, name)}
+                />
               ))}
             </ul>
           </main>
