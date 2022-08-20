@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ReactComponent as ArrowRightIcon } from "../assets/svg/keyboardArrowRightIcon.svg";
 import visibilityIcon from "../assets/svg/visibilityIcon.svg";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { toast } from "react-toastify";
 
 function SingIn() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-
     email: "",
     password: "",
   });
@@ -18,6 +20,27 @@ function SingIn() {
       [e.target.id]: e.target.value,
     }));
   };
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    const auth = getAuth();
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      if (userCredential.user) {
+        console.log("redirect");
+        navigate("/profile");
+        toast.success("Hey 👋, you are loged in!");
+      }
+    } catch (error) {
+      //auth/wrong-password
+      console.log(error.code);
+      toast.error(error.message);
+    }
+  };
 
   return (
     <>
@@ -26,8 +49,7 @@ function SingIn() {
           <p className="pageHeader">Walcome Back!</p>
         </header>
 
-        <form>
-        
+        <form onSubmit={onSubmit}>
           <input
             type="email"
             className="emailInput"

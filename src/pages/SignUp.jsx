@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ReactComponent as ArrowRightIcon } from "../assets/svg/keyboardArrowRightIcon.svg";
 import visibilityIcon from "../assets/svg/visibilityIcon.svg";
 import {
@@ -8,7 +8,8 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { db } from "../firebase.config";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore"; 
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 function SignUp() {
   const navigate = useNavigate();
@@ -38,15 +39,23 @@ function SignUp() {
       );
       const user = userCredential.user;
       updateProfile(auth.currentUser, {
-        displayName: name
+        displayName: name,
       });
-      const copyUser= {...formData}
-      delete copyUser.password
-      copyUser.timestamp=serverTimestamp()
-      await setDoc(doc(db, "users", user.uid), copyUser)
+      const copyUser = { ...formData };
+      delete copyUser.password;
+      copyUser.timestamp = serverTimestamp();
+      await setDoc(doc(db, "users", user.uid), copyUser);
       navigate("/");
+      //'User account created & signed in!'
+      toast.success("Welcome to Reant, Bay and Sell Real Estate");
     } catch (error) {
-      console.log(error);
+      if (error.code === "auth/email-already-in-use") {
+        toast.error("That email address is already in use!");
+      }
+
+      if (error.code === "auth/invalid-email") {
+        toast.error("That email address is invalid!");
+      }
     }
   };
 

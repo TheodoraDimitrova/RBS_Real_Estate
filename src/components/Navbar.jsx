@@ -25,7 +25,15 @@ function Navbar() {
               width="36px"
               height="36px"
             />
-            <p className={pathMatchRoute("/") ? "navbarListItemNameActive" : "navbarListItemName"}>Explore</p>
+            <p
+              className={
+                pathMatchRoute("/")
+                  ? "navbarListItemNameActive"
+                  : "navbarListItemName"
+              }
+            >
+              Explore
+            </p>
           </li>
           <li className="navbarListItem" onClick={() => navigate("/offers")}>
             <OfferIcon
@@ -33,15 +41,31 @@ function Navbar() {
               width="36px"
               height="36px"
             />
-            <p className={pathMatchRoute("/offers") ? "navbarListItemNameActive" : "navbarListItemName"}>Offers</p>
+            <p
+              className={
+                pathMatchRoute("/offers")
+                  ? "navbarListItemNameActive"
+                  : "navbarListItemName"
+              }
+            >
+              Offers
+            </p>
           </li>
-          <li className="navbarListItem" onClick={() => navigate("/sign-in")}>
+          <li className="navbarListItem" onClick={() => navigate("/profile")}>
             <PersonOutlineIcon
-              fill={pathMatchRoute("/sign-in") ? "#2c2c2c" : "#8f8f8f"}
+              fill={pathMatchRoute("/profile") ? "#2c2c2c" : "#8f8f8f"}
               width="36px"
               height="36px"
             />
-            <p className={pathMatchRoute("/sign-in") ? "navbarListItemNameActive" : "navbarListItemName"}>Profile</p>
+            <p
+              className={
+                pathMatchRoute("/profile")
+                  ? "navbarListItemNameActive"
+                  : "navbarListItemName"
+              }
+            >
+              Profile
+            </p>
           </li>
         </ul>
       </nav>
