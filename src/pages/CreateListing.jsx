@@ -11,6 +11,7 @@ import Spinner from "../components/Spinner";
 import { toast } from "react-toastify";
 import { db } from "../firebase.config";
 import { v4 } from "uuid";
+import { addDoc, serverTimestamp, collection } from "firebase/firestore";
 
 function CreateListing() {
   const [loading, SetLoading] = useState(false);
@@ -63,7 +64,7 @@ function CreateListing() {
     e.preventDefault();
 
     SetLoading(true);
-    if (discountedPrice >= regularPrice) {
+    if (discountedPrice < regularPrice) {
       SetLoading(false);
       toast.error("Discounted Price needs to be less than regular Price");
       return;
@@ -73,7 +74,7 @@ function CreateListing() {
       toast.error("Max 6 images");
       return;
     }
-    console.log("submit", formData);
+
     //store images in firebase
     const storeImage = async (image) => {
       return new Promise((resolve, reject) => {
@@ -117,9 +118,21 @@ function CreateListing() {
       toast.error("Images not uploading");
       return;
     });
+    const formDataCopy = {
+      //add or delete some data from formData before update
+      ...formData,
+      imageUrls,
+      timestamp: serverTimestamp(),
+    };
+    delete formDataCopy.images;
+    !formData.offer && delete formDataCopy.discountedPrice;
+    console.log("submit", formDataCopy);
 
-    console.log(imageUrls);
+    const docRef = await addDoc(collection(db, "listings"), formDataCopy); //addDoc create a document reference with an auto-generated ID
+    console.log(docRef.id);
 
+    toast.success("Advertisement saved");
+    navigate(`/category/${formData.type}/${docRef.id}`);
     SetLoading(false);
   };
   const onTransform = (e) => {
