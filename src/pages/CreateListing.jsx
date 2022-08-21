@@ -1,7 +1,16 @@
 import { useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../components/Spinner";
+import { toast } from "react-toastify";
+import { db } from "../firebase.config";
+import { v4 } from "uuid";
 
 function CreateListing() {
   const [loading, SetLoading] = useState(false);
@@ -50,9 +59,68 @@ function CreateListing() {
     // eslint-disable-next-line
   }, []);
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+
+    SetLoading(true);
+    if (discountedPrice >= regularPrice) {
+      SetLoading(false);
+      toast.error("Discounted Price needs to be less than regular Price");
+      return;
+    }
+    if (images.maxLength > 6) {
+      SetLoading(false);
+      toast.error("Max 6 images");
+      return;
+    }
     console.log("submit", formData);
+    //store images in firebase
+    const storeImage = async (image) => {
+      return new Promise((resolve, reject) => {
+        const storage = getStorage();
+        const fileName = `${auth.currentUser.uid}-${image.name}-${v4()}`;
+
+        const storageRef = ref(storage, "images/" + fileName);
+        const uploadTask = uploadBytesResumable(storageRef, image);
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log("Upload is " + progress + "% done");
+            switch (snapshot.state) {
+              case "paused":
+                console.log("Upload is paused");
+                break;
+              case "running":
+                console.log("Upload is running");
+                break;
+            }
+          },
+          (error) => {
+            reject(error);
+          },
+          () => {
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              resolve(downloadURL);
+            });
+          }
+        );
+      });
+    };
+
+    const imageUrls = await Promise.all(
+      // array of images urls
+      [...images].map((image) => storeImage(image))
+    ).catch(() => {
+      SetLoading(false);
+      toast.error("Images not uploading");
+      return;
+    });
+
+    console.log(imageUrls);
+
+    SetLoading(false);
   };
   const onTransform = (e) => {
     console.log("onTransform btn");
