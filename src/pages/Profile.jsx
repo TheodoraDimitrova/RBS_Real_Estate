@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { getAuth, updateProfile } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
 import { db } from "../firebase.config";
 import { doc, updateDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
+import { Link, useNavigate } from "react-router-dom";
+import arrowRightIcon from "../assets/svg/keyboardArrowRightIcon.svg";
+import homeIcon from "../assets/svg/homeIcon.svg";
 
 function Profile() {
   const navigate = useNavigate();
@@ -47,7 +49,7 @@ function Profile() {
     <div className="profile">
       <header className="profileHeader">
         <p className="pageHeader">My Profile</p>
-        <button className="logOut" type="button" onClick={onLogout}>
+        <button className="logOut btn-grad" type="button" onClick={onLogout}>
           Logout
         </button>
       </header>
@@ -55,7 +57,7 @@ function Profile() {
         <div className="profileDetailsHeader">
           <p className="profileDetailsText">Personal Details</p>
           <p
-            className="changePersonalDetails"
+            className="changePersonalDetails btn-grad"
             onClick={() => {
               changeDetails && onSubmit();
               setChangeDetails((prevState) => !prevState);
@@ -84,6 +86,12 @@ function Profile() {
             />
           </form>
         </div>
+
+        <Link to="/create-ad" className="createListing">
+          <img src={homeIcon} alt="home" />
+          <p>Sell or Rent your home</p>
+          <img src={arrowRightIcon} alt="arrowRight" />
+        </Link>
       </main>
     </div>
   );

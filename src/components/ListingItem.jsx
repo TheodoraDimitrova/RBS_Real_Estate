@@ -6,8 +6,6 @@ import bathtubIcon from "../assets/svg/bathtubIcon.svg";
 import bedIcon from "../assets/svg/bedIcon.svg";
 
 export default function ListingItem({ listing, id, onDelete }) {
-  console.log(listing, id);
-
   return (
     <li className="categoryListing">
       <Link
@@ -58,7 +56,7 @@ export default function ListingItem({ listing, id, onDelete }) {
         <DeleteIcon
           className="removeIcon"
           fill="red"
-          onClick={() => onDelete(id, listing.name)}
+          onClick={() => onDelete(listing.id, listing.name)}
         />
       )}
     </li>

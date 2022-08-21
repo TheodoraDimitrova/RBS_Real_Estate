@@ -13,11 +13,15 @@ import { toast } from "react-toastify";
 import ListingItem from "../components/ListingItem";
 import Spinner from "../components/Spinner";
 import { db } from "../firebase.config";
+import { getAuth } from "firebase/auth";
 
 export default function Category() {
   const [listings, SetListings] = useState(null);
   const [loading, SetLoading] = useState(true);
   const params = useParams();
+  const auth = getAuth();
+  const user = auth.currentUser;
+
   useEffect(() => {
     const fetchListings = async () => {
       try {
@@ -45,7 +49,11 @@ export default function Category() {
     };
 
     fetchListings();
-  }, []);
+  }, [params.categoryName]);
+
+  const onDelete = (id, name) => {
+    console.log("delete", id, name);
+  };
 
   return (
     <div className="category">
@@ -67,7 +75,9 @@ export default function Category() {
                   key={item.id}
                   listing={item.data}
                   id={item.id}
-                  onDelete={(id, name) => console.log(id, name)}
+                  // onDelete={
+                  //   item.data.userRef === user.uid ? onDelete : undefined
+                  // }
                 />
               ))}
             </ul>

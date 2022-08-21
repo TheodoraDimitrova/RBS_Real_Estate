@@ -9,13 +9,14 @@ export const useAuthStatus = () => {
     const auth = getAuth();
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
+        console.log("user from AuthStatus", user);
         setloggedIn(true);
       }
       setCheckingStatus(false);
     });
 
     return unsub;
-  });
+  }, []);
 
   return { loggedIn, checkingStatus };
 };

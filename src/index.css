@@ -9,7 +9,7 @@ html::-webkit-scrollbar {
 
 body {
   font-family: "Montserrat", sans-serif;
-  background-color: #f2f4f8;
+  background: linear-gradient(90deg, #fdbb2d 0%, #3a1c71 100%);
   margin: 0;
   box-sizing: border-box;
 }
@@ -57,9 +57,35 @@ button {
   border-radius: 1rem;
 }
 
+.btn-grad {
+  background-image: linear-gradient(
+    to right,
+    #1d2b64 0%,
+    #f8cdda 51%,
+    #1d2b64 100%
+  );
+  margin: 10px;
+  padding: 15px 45px;
+  text-align: center;
+  text-transform: uppercase;
+  transition: 0.5s;
+  background-size: 200% auto;
+  color: white;
+  /* box-shadow: 0 0 5px #eee; */
+  border-radius: 10px;
+  display: block;
+}
+
+.btn-grad:hover {
+  background-position: right center; /* change the direction of the change here */
+  color: #fff;
+  text-decoration: none;
+}
+
 .primaryButton {
   cursor: pointer;
   background: #00cc66;
+
   border-radius: 1rem;
   padding: 0.85rem 2rem;
   color: #ffffff;
@@ -625,9 +651,6 @@ button {
   font-size: 1rem;
   font-weight: 600;
   color: #ffffff;
-  background-color: #00cc66;
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
 }
 
 .profileDetailsHeader {
@@ -643,7 +666,6 @@ button {
 .changePersonalDetails {
   cursor: pointer;
   font-weight: 600;
-  color: #00cc66;
 }
 
 .profileCard {
@@ -732,13 +754,12 @@ button {
   font-weight: 600;
   border-radius: 1rem;
   font-size: 1rem;
-  margin: 0.5rem 0.5rem 0 0;
+  margin: 10px 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 .formButtonActive {
-  background-color: #00cc66;
   color: #ffffff;
 }
 
@@ -793,7 +814,12 @@ button {
   width: 100%;
 }
 .formInputFile::-webkit-file-upload-button {
-  background-color: #00cc66;
+  background-image: linear-gradient(
+    to right,
+    #1d2b64 0%,
+    #f8cdda 51%,
+    #1d2b64 100%
+  );
   border: none;
   color: #ffffff;
   font-weight: 600;
@@ -804,6 +830,7 @@ button {
 
 .createListingButton {
   margin-top: 5rem;
+  width: 80%;
 }
 
 .offers {
