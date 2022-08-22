@@ -49,7 +49,6 @@ function CreateListing() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("user", user);
         SetFormData({ ...formData, useRef: user.uid });
       } else {
         navigate("/sign-in");
@@ -64,14 +63,14 @@ function CreateListing() {
     e.preventDefault();
 
     SetLoading(true);
-    if (discountedPrice < regularPrice) {
+    if (discountedPrice >= regularPrice) {
       SetLoading(false);
       toast.error("Discounted Price needs to be less than regular Price");
       return;
     }
     if (images.maxLength > 6) {
       SetLoading(false);
-      toast.error("Max 6 images");
+      toast.error("Max 6 images, up to 2Mb");
       return;
     }
 
@@ -103,6 +102,7 @@ function CreateListing() {
           },
           () => {
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              console.log(downloadURL);
               resolve(downloadURL);
             });
           }
@@ -111,13 +111,13 @@ function CreateListing() {
     };
 
     const imageUrls = await Promise.all(
-      // array of images urls
       [...images].map((image) => storeImage(image))
     ).catch(() => {
       SetLoading(false);
-      toast.error("Images not uploading");
+      toast.error("Images could not upload,max size 2Mb or less");
       return;
     });
+
     const formDataCopy = {
       //add or delete some data from formData before update
       ...formData,
@@ -135,8 +135,8 @@ function CreateListing() {
     navigate(`/category/${formData.type}/${docRef.id}`);
     SetLoading(false);
   };
+
   const onTransform = (e) => {
-    console.log("onTransform btn");
     let boolean = null; //check if is boolean
     if (e.target.value === "true") {
       boolean = true;
