@@ -55,7 +55,7 @@ export default function ListingItem({ listing, id, onDelete }) {
       {onDelete && (
         <DeleteIcon
           className="removeIcon"
-          fill="red"
+          fill="rgb(231, 76, 60)"
           onClick={() => onDelete(listing.id, listing.name)}
         />
       )}

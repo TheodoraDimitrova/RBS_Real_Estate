@@ -49,7 +49,7 @@ function CreateListing() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
-        SetFormData({ ...formData, useRef: user.uid });
+        SetFormData({ ...formData, userRef: user.uid });
       } else {
         navigate("/sign-in");
       }

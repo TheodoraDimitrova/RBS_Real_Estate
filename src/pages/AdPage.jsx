@@ -5,7 +5,14 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import Spinner from "../components/Spinner";
 import { db } from "../firebase.config";
 import shareIcom from "../assets/svg/shareIcon.svg";
-import { async } from "@firebase/util";
+
+import { Navigation, Pagination, A11y } from "swiper";
+import { Swiper, SwiperSlide } from "swiper/react";
+
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/a11y";
 
 function AdPage() {
   const [ad, setAd] = useState(null);
@@ -34,6 +41,30 @@ function AdPage() {
 
   return (
     <main>
+      <Swiper
+        navigation={true}
+        modules={[Navigation, Pagination, A11y]}
+        slidesPerView={1}
+        a11y={true}
+        style={{ height: "300px" }}
+        pagination={{ clickable: true }}
+      >
+        {ad.imageUrls.map((url, index) => (
+          <SwiperSlide key={index}>
+            <div
+              className="swiperSlideDiv"
+              key={index}
+              style={{
+                background: `url(${ad.imageUrls[index]}) center no-repeat`,
+                backgroundSize: " cover",
+              }}
+            >
+              <p className="swiperSlideText">{ad.name}</p>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+
       <div
         className="shareIconDiv"
         onClick={() => {
@@ -48,11 +79,14 @@ function AdPage() {
         <img src={shareIcom} alt="share-icon" />
       </div>
       {shareLink && <p className="linkCopied">Link is copied!</p>}
+
       <div className="listingDetails">
         <p className="listingName">
           {ad.name} -{" "}
           {ad.offer
-            ? ad.discoundPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+            ? ad.discountedPrice
+                .toString()
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
             : ad.regularPrice
                 .toString()
                 .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
@@ -63,7 +97,7 @@ function AdPage() {
         </p>
         {ad.offer && (
           <p className="discountPrice">
-            `${ad.regularPrice}- ${ad.discoundPrice}` discount
+            {ad.regularPrice - ad.discountedPrice} discount
           </p>
         )}
         <ul className="listingDetailsList">
@@ -74,12 +108,11 @@ function AdPage() {
           <li>{ad.parking && "Parking Spot"}</li>
           <li>{ad.furnished && "Furnished"}</li>
         </ul>
-        {ad.useRef}-------
-        {auth.currentUser.uid}
-        {auth.currentUser.uid !== ad.useRef && (
+
+        {auth.currentUser.uid !== ad.userRef && (
           <Link
             className="btn-grad"
-            to={`/contact/${ad.useRef}?adName=${ad.name}`}
+            to={`/contact/${ad.userRef}?adName=${ad.name}`}
           >
             Contact Owner
           </Link>

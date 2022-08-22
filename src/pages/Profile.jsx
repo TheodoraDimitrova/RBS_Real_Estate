@@ -1,15 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getAuth, updateProfile } from "firebase/auth";
 import { db } from "../firebase.config";
-import { doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import arrowRightIcon from "../assets/svg/keyboardArrowRightIcon.svg";
 import homeIcon from "../assets/svg/homeIcon.svg";
+import Spinner from "../components/Spinner";
+import ListingItem from "../components/ListingItem";
 
 function Profile() {
   const navigate = useNavigate();
   const auth = getAuth();
+  const [loading, SetLoading] = useState(true);
+  const [ads, SetAds] = useState([]);
   const [changeDetails, setChangeDetails] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -17,6 +30,34 @@ function Profile() {
     email: auth.currentUser.email,
   });
   const { name, email } = formData;
+
+  useEffect(() => {
+    const fetchUserListings = async () => {
+      const listingsRef = collection(db, "listings");
+
+      const q = query(
+        listingsRef,
+        where("userRef", "==", auth.currentUser.uid),
+        orderBy("timestamp", "desc")
+      );
+
+      const querySnap = await getDocs(q);
+
+      const listings = [];
+
+      querySnap.forEach((doc) => {
+        return listings.push({
+          id: doc.id,
+          data: doc.data(),
+        });
+      });
+
+      SetAds(listings);
+      SetLoading(false);
+    };
+    fetchUserListings();
+  }, [auth.currentUser.uid]);
+
   const onLogout = () => {
     auth.signOut();
     navigate("/");
@@ -42,6 +83,14 @@ function Profile() {
       }
     } catch (error) {
       toast.error("Could not update profile details");
+    }
+  };
+  const onDelete = async (adId) => {
+    if (window.confirm("Are you sure?")) {
+      await deleteDoc(doc(db, "listings", adId));
+      const updatedListings = ads.filter((ad) => ad.id !== adId);
+      SetAds(updatedListings);
+      toast.success("Successfully deleted advertisement");
     }
   };
 
@@ -86,12 +135,28 @@ function Profile() {
             />
           </form>
         </div>
-
         <Link to="/create-ad" className="createListing">
           <img src={homeIcon} alt="home" />
           <p>Sell or Rent your home</p>
           <img src={arrowRightIcon} alt="arrowRight" />
         </Link>
+
+        {!loading && ads?.length > 0 && (
+          <>
+            <p className="listingsText">Your Advertismets</p>
+            <ul className="listingsList">
+              {ads.map((listing) => (
+                <ListingItem
+                  listing={listing.data}
+                  id={listing.id}
+                  key={listing.id}
+                  onDelete={() => onDelete(listing.id)}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+        {/* return <Spinner />; */}
       </main>
     </div>
   );

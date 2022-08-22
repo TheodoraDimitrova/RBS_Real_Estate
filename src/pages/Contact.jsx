@@ -7,11 +7,10 @@ import { db } from "../firebase.config";
 function Contact() {
   const [message, SetMessage] = useState("");
   const [owner, SetOwner] = useState(null);
-  const [searchParams, setsearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const params = useParams();
 
   useEffect(() => {
-    console.log("first", params);
     const getOwner = async () => {
       const docRef = doc(db, "users", params.adName);
       const docSnap = await getDoc(docRef);
