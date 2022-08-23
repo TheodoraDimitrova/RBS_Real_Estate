@@ -13,14 +13,12 @@ import { toast } from "react-toastify";
 import ListingItem from "../components/ListingItem";
 import Spinner from "../components/Spinner";
 import { db } from "../firebase.config";
-import { getAuth } from "firebase/auth";
 
 export default function Category() {
-  const [listings, SetListings] = useState(null);
-  const [loading, SetLoading] = useState(true);
+  const [listings, setListings] = useState(null);
+  const [loading, setLoading] = useState(true);
   const params = useParams();
-  const auth = getAuth();
-  const user = auth.currentUser;
+  const [lastVisibleAds, setLastVisibleAds] = useState(null);
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -29,9 +27,12 @@ export default function Category() {
           collection(db, "listings"),
           where("type", "==", params.categoryName),
           orderBy("timestamp", "desc"),
-          limit(10)
+          limit(1)
         );
         const querySnapshot = await getDocs(q);
+        const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+        setLastVisibleAds(lastVisible);
+
         const listings = [];
         querySnapshot.forEach((doc) => {
           // doc.data() is never undefined for query doc snapshots
@@ -41,8 +42,8 @@ export default function Category() {
             data: doc.data(),
           });
         });
-        SetListings(listings);
-        SetLoading(false);
+        setListings(listings);
+        setLoading(false);
       } catch (error) {
         toast.error("Something went wrong");
       }
@@ -51,8 +52,31 @@ export default function Category() {
     fetchListings();
   }, [params.categoryName]);
 
-  const onDelete = (id, name) => {
-    console.log("delete", id, name);
+  const onMore = async () => {
+    try {
+      const q = query(
+        collection(db, "listings"),
+        where("type", "==", params.categoryName),
+        orderBy("timestamp", "desc"),
+        startAfter(lastVisibleAds),
+        limit(10)
+      );
+      const querySnapshot = await getDocs(q);
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastVisibleAds(lastVisible);
+
+      const listings = [];
+      querySnapshot.forEach((doc) => {
+        return listings.push({
+          id: doc.id,
+          data: doc.data(),
+        });
+      });
+      setListings((prevState) => [...prevState, ...listings]);
+      setLoading(false);
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
   };
 
   return (
@@ -71,17 +95,15 @@ export default function Category() {
           <main>
             <ul className="categoryListings">
               {listings.map((item) => (
-                <ListingItem
-                  key={item.id}
-                  listing={item.data}
-                  id={item.id}
-                  // onDelete={
-                  //   item.data.userRef === user.uid ? onDelete : undefined
-                  // }
-                />
+                <ListingItem key={item.id} listing={item.data} id={item.id} />
               ))}
             </ul>
           </main>
+          {lastVisibleAds && (
+            <p className="loadMore btn-grad" onClick={onMore}>
+              Load More
+            </p>
+          )}
         </>
       ) : (
         <p>No Advertisements for {params.categoryName}</p>

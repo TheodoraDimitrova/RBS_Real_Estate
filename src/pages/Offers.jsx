@@ -16,11 +16,11 @@ import { db } from "../firebase.config";
 import { getAuth } from "firebase/auth";
 
 export default function Offers() {
-  const [listings, SetListings] = useState(null);
-  const [loading, SetLoading] = useState(true);
+  const [listings, setListings] = useState(null);
+  const [loading, setLoading] = useState(true);
   const params = useParams();
   const auth = getAuth();
-  const user = auth.currentUser;
+  const [lastVisibleAds, setLastVisibleAds] = useState();
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -32,6 +32,8 @@ export default function Offers() {
           limit(10)
         );
         const querySnapshot = await getDocs(q);
+        const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+        setLastVisibleAds(lastVisible);
         const listings = [];
         querySnapshot.forEach((doc) => {
           return listings.push({
@@ -39,8 +41,8 @@ export default function Offers() {
             data: doc.data(),
           });
         });
-        SetListings(listings);
-        SetLoading(false);
+        setListings(listings);
+        setLoading(false);
       } catch (error) {
         toast.error("Something went wrong");
       }
@@ -48,6 +50,33 @@ export default function Offers() {
 
     fetchListings();
   }, []);
+
+  const onMore = async () => {
+    try {
+      const q = query(
+        collection(db, "listings"),
+        where("offer", "==", true),
+        orderBy("timestamp", "desc"),
+        startAfter(lastVisibleAds),
+        limit(10)
+      );
+      const querySnapshot = await getDocs(q);
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastVisibleAds(lastVisible);
+
+      const listings = [];
+      querySnapshot.forEach((doc) => {
+        return listings.push({
+          id: doc.id,
+          data: doc.data(),
+        });
+      });
+      setListings((prevState) => [...prevState, ...listings]);
+      setLoading(false);
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+  };
 
   return (
     <div className="category">
@@ -68,6 +97,11 @@ export default function Offers() {
         </>
       ) : (
         <p>There are no current offers</p>
+      )}
+      {lastVisibleAds && (
+        <p className="loadMore btn-grad" onClick={onMore}>
+          Load More
+        </p>
       )}
     </div>
   );

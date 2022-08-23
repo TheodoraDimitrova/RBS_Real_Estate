@@ -390,6 +390,12 @@ button {
   padding: 0.25rem 0.5rem;
   border-radius: 1rem;
 }
+@media (min-width: 750px) {
+  .swiper {
+    height: 600px !important;
+  }
+}
+
 @media (min-width: 1024px) {
   .swiperSlidePrice {
     font-size: 1.25rem;

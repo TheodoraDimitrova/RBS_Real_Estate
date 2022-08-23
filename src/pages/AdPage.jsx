@@ -56,7 +56,7 @@ function AdPage() {
               key={index}
               style={{
                 background: `url(${ad.imageUrls[index]}) center no-repeat`,
-                backgroundSize: " cover",
+                backgroundSize: "cover",
               }}
             >
               <p className="swiperSlideText">{ad.name}</p>
