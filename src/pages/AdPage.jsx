@@ -103,7 +103,7 @@ function AdPage() {
         <ul className="listingDetailsList">
           <li>{ad.bedrooms > 1 ? `${ad.bedrooms} Bedrooms` : "1 Bedroom"}</li>
           <li>
-            {ad.bathrooms > 1 ? `${ad.bathroom} Bathrooms` : "1 Bathroom"}
+            {ad.bathrooms > 1 ? `${ad.bathrooms} Bathrooms` : "1 Bathroom"}
           </li>
           <li>{ad.parking && "Parking Spot"}</li>
           <li>{ad.furnished && "Furnished"}</li>

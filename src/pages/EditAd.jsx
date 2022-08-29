@@ -1,23 +1,26 @@
 import { useState, useEffect } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+
 import {
   getStorage,
   ref,
   uploadBytesResumable,
   getDownloadURL,
+  deleteObject,
 } from "firebase/storage";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Spinner from "../components/Spinner";
 import { toast } from "react-toastify";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.config";
-import { addDoc, serverTimestamp, collection } from "firebase/firestore";
+import { AiTwotoneDelete } from "react-icons/ai";
 
-function CreateListing() {
-  const [loading, setLoading] = useState(false);
+function EditAd() {
+  const [loading, setLoading] = useState(true);
+  const [imageUrls, setImageUrls] = useState([]);
   const navigate = useNavigate();
-  const auth = getAuth();
+  const params = useParams();
 
-  const [formData, SetFormData] = useState({
+  const [formData, setFormData] = useState({
     type: "sell",
     name: "",
     bedrooms: 1,
@@ -28,6 +31,7 @@ function CreateListing() {
     offer: true,
     regularPrice: 0,
     discountedPrice: 0,
+    imageUrls: [],
     images: {},
   });
 
@@ -39,6 +43,7 @@ function CreateListing() {
     offer,
     regularPrice,
     discountedPrice,
+
     images,
     parking,
     furnished,
@@ -46,92 +51,133 @@ function CreateListing() {
   } = formData;
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        SetFormData({ ...formData, userRef: user.uid });
-      } else {
-        navigate("/sign-in");
-      }
-    });
+    const fetchAd = async () => {
+      const docRef = doc(db, "listings", params.adId);
+      const docSnap = await getDoc(docRef);
 
-    return unsub; //cancel all subscriptions and asynchronous tasks in a useEffect cleanup function.
-    // eslint-disable-next-line
-  }, []);
+      if (docSnap.exists()) {
+        setFormData(docSnap.data());
+        setImageUrls(docSnap.data().imageUrls);
+        setLoading(false);
+      }
+    };
+
+    fetchAd();
+  }, [params.adId]);
+
+  const deleteSingleImage = async (e) => {
+    if (window.confirm("Are you sure you want to remove the image?")) {
+      const delFromStore = async () => {
+        let urlImage = e.target.id;
+        const storage = getStorage();
+        const desertRef = ref(storage, `${urlImage}`);
+        try {
+          await deleteObject(desertRef);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      await delFromStore();
+      const arrayRemove = (url) => {
+        let filtered = imageUrls.filter((img) => img !== url);
+        return filtered;
+      };
+      await updateDoc(doc(db, "listings", params.adId), {
+        imageUrls: arrayRemove(e.target.id),
+      });
+      const updatedImages = imageUrls.filter((url) => url !== e.target.id);
+      setImageUrls(updatedImages);
+      toast.success("Successfully removed image");
+    }
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    setLoading(true);
-
-    if (discountedPrice >= regularPrice) {
+    if (offer && discountedPrice >= regularPrice) {
       setLoading(false);
       toast.error("Discounted Price needs to be less than regular Price");
       return;
     }
-    if (images.maxLength > 6) {
-      setLoading(false);
-      toast.error("Max 6 images, up to 2Mb");
-      return;
-    }
 
-    //store images in firebase
-    const storeImage = async (image) => {
-      return new Promise((resolve, reject) => {
-        const storage = getStorage();
-        const fileName = `${image.name}`;
+    if (images !== undefined) {
+      if (images.length > 6) {
+        setLoading(false);
+        toast.error(`Max 6 images, up to 2Mb`);
+        return;
+      }
 
-        const storageRef = ref(storage, "images/" + fileName);
-        const uploadTask = uploadBytesResumable(storageRef, image);
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const progress =
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log("Upload is " + progress + "% done");
-            //eslint-disable-next-line
-            switch (snapshot.state) {
-              case "paused":
-                console.log("Upload is paused");
-                break;
-              case "running":
-                console.log("Upload is running");
-                break;
+      //store images in firebase
+      const storeImage = async (image) => {
+        return new Promise((resolve, reject) => {
+          const storage = getStorage();
+          const fileName = `${image.name}`;
+
+          const storageRef = ref(storage, "images/" + fileName);
+          const uploadTask = uploadBytesResumable(storageRef, image);
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              const progress =
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log("Upload is " + progress + "% done");
+              //eslint-disable-next-line
+              switch (snapshot.state) {
+                case "paused":
+                  console.log("Upload is paused");
+                  break;
+                case "running":
+                  console.log("Upload is running");
+                  break;
+              }
+            },
+            (error) => {
+              reject(error);
+            },
+            () => {
+              getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                resolve(downloadURL);
+              });
             }
-          },
-          (error) => {
-            reject(error);
-          },
-          () => {
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-              resolve(downloadURL);
-            });
-          }
-        );
+          );
+        });
+      };
+
+      const urls = await Promise.all(
+        [...images].map((image) => storeImage(image))
+      ).catch(() => {
+        setLoading(false);
+        toast.error("Images could not upload,max size 2Mb or less");
+        return;
       });
-    };
+      const formDataCopy = {
+        //add or delete some data from formData before update
+        ...formData,
+        imageUrls: [...urls, ...imageUrls],
+      };
+      delete formDataCopy.images;
+      !formData.offer && delete formDataCopy.discountedPrice;
 
-    const imageUrls = await Promise.all(
-      [...images].map((image) => storeImage(image))
-    ).catch(() => {
+      const adRef = doc(db, "listings", params.adId);
+      await updateDoc(adRef, formDataCopy);
+      toast.success("Advertisement edited");
+      navigate(`/category/${formData.type}/${adRef.id}`);
       setLoading(false);
-      toast.error("Images could not upload,max size 2Mb or less");
-      return;
-    });
+    } else {
+      const formDataCopy = {
+        //add or delete some data from formData before update
+        ...formData,
+        imageUrls: imageUrls,
+      };
+      delete formDataCopy.images;
+      !formData.offer && delete formDataCopy.discountedPrice;
 
-    const formDataCopy = {
-      //add or delete some data from formData before update
-      ...formData,
-      imageUrls,
-      timestamp: serverTimestamp(),
-    };
-    delete formDataCopy.images;
-    !formData.offer && delete formDataCopy.discountedPrice;
-
-    const docRef = await addDoc(collection(db, "listings"), formDataCopy); //addDoc create a document reference with an auto-generated ID
-
-    toast.success("Advertisement saved");
-    navigate(`/category/${formData.type}/${docRef.id}`);
-    setLoading(false);
+      const adRef = doc(db, "listings", params.adId);
+      await updateDoc(adRef, formDataCopy);
+      toast.success("Advertisement edited");
+      navigate(`/category/${formData.type}/${adRef.id}`);
+      setLoading(false);
+    }
   };
 
   const onTransform = (e) => {
@@ -144,14 +190,14 @@ function CreateListing() {
     }
     if (e.target.files) {
       //if is files
-      SetFormData((prevState) => ({
+      setFormData((prevState) => ({
         ...prevState,
         images: e.target.files,
       }));
     }
     // text,boolean, numbers
     if (!e.target.files) {
-      SetFormData((prevState) => ({
+      setFormData((prevState) => ({
         ...prevState,
         [e.target.id]: boolean ?? e.target.value,
       }));
@@ -163,7 +209,7 @@ function CreateListing() {
   return (
     <div className="profile">
       <header>
-        <p className="pageHeader">Create Advertising</p>
+        <p className="pageHeader">Edit your Advertisement</p>
       </header>
       <main>
         <form onSubmit={onSubmit}>
@@ -193,18 +239,16 @@ function CreateListing() {
             </button>
           </div>
           <label htmlFor="formLabel">Name</label>
-
           <input
             className="formInputName"
             type="text"
             id="name"
             value={name}
-            maxLength="50"
+            maxLength="32"
             minLength="10"
             required="required"
             onChange={onTransform}
           />
-
           <div className="formRooms flex">
             <div>
               <label htmlFor="formLabel">Bedrooms</label>
@@ -368,13 +412,31 @@ function CreateListing() {
             onChange={onTransform}
             accept=".jpg,.png,.jpeg"
             multiple
-            required
           />
+          <p>Uploaded Files</p>
+          <div className="flex">
+            {imageUrls.length &&
+              imageUrls.map((image, index) => (
+                <div key={index} className="presentImage">
+                  <img width="75px" height="75px" src={image} alt={image} />
+
+                  <button
+                    type="button"
+                    className="delete"
+                    id={image}
+                    onClick={deleteSingleImage}
+                  >
+                    <AiTwotoneDelete />
+                    Delete
+                  </button>
+                </div>
+              ))}
+          </div>
           <button
             type="submit"
             className="formButton createListingButton btn-grad"
           >
-            Create Advertisement Advertisement
+            Edit Advertisement
           </button>
         </form>
       </main>
@@ -382,4 +444,4 @@ function CreateListing() {
   );
 }
 
-export default CreateListing;
+export default EditAd;

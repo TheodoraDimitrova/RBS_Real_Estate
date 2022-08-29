@@ -5,6 +5,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
@@ -17,11 +18,12 @@ import arrowRightIcon from "../assets/svg/keyboardArrowRightIcon.svg";
 import homeIcon from "../assets/svg/homeIcon.svg";
 import Spinner from "../components/Spinner";
 import ListingItem from "../components/ListingItem";
+import { getStorage, ref, deleteObject } from "firebase/storage";
 
 function Profile() {
   const navigate = useNavigate();
   const auth = getAuth();
-  const [loading, SetLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [ads, SetAds] = useState([]);
   const [changeDetails, setChangeDetails] = useState(false);
 
@@ -53,7 +55,7 @@ function Profile() {
       });
 
       SetAds(listings);
-      SetLoading(false);
+      setLoading(false);
     };
     fetchUserListings();
   }, [auth.currentUser.uid]);
@@ -87,12 +89,44 @@ function Profile() {
   };
   const onDelete = async (adId) => {
     if (window.confirm("Are you sure?")) {
+      setLoading(true);
+
+      //delete images in firebase
+      const deleteImage = async (image) => {
+        return new Promise((resolve, reject) => {
+          const storage = getStorage();
+          const desertRef = ref(storage, `${image}`);
+          try {
+            deleteObject(desertRef);
+            setLoading(false);
+          } catch (error) {
+            toast.error("Uh-oh, an error occurred!");
+            setLoading(false);
+          }
+        });
+      };
+
+      const docRef = doc(db, "listings", adId);
+      const docSnap = await getDoc(docRef);
+      const images = docSnap.data().imageUrls;
+
+      images.map(async (image) => {
+        await deleteImage(image);
+      });
+
       await deleteDoc(doc(db, "listings", adId));
       const updatedListings = ads.filter((ad) => ad.id !== adId);
       SetAds(updatedListings);
+      setLoading(false);
       toast.success("Successfully deleted advertisement");
     }
   };
+
+  const onEdit = (adId) => {
+    navigate(`/edit-ad/${adId}`);
+  };
+
+  if (loading) return <Spinner />;
 
   return (
     <div className="profile">
@@ -151,12 +185,12 @@ function Profile() {
                   id={listing.id}
                   key={listing.id}
                   onDelete={() => onDelete(listing.id)}
+                  onEdit={() => onEdit(listing.id)}
                 />
               ))}
             </ul>
           </>
         )}
-        {/* return <Spinner />; */}
       </main>
     </div>
   );

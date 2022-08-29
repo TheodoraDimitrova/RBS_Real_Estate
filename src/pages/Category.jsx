@@ -27,7 +27,7 @@ export default function Category() {
           collection(db, "listings"),
           where("type", "==", params.categoryName),
           orderBy("timestamp", "desc"),
-          limit(1)
+          limit(10)
         );
         const querySnapshot = await getDocs(q);
         const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];

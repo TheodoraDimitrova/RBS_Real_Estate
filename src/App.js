@@ -14,6 +14,7 @@ import CreateListing from "./pages/CreateListing";
 import NotFound from "./pages/NotFound";
 import AdPage from "./pages/AdPage";
 import Contact from "./pages/Contact";
+import EditAd from "./pages/EditAd";
 
 function App() {
   return (
@@ -25,15 +26,24 @@ function App() {
           <Route path="/profile" element={<PrivateRoute />}>
             <Route path="/profile" element={<Profile />} />
           </Route>
+          <Route path="/edit-ad/:adId" element={<PrivateRoute />}>
+            <Route path="/edit-ad/:adId" element={<EditAd />} />
+          </Route>
+          <Route path="/create-ad" element={<PrivateRoute />}>
+            <Route path="/create-ad" element={<CreateListing />} />
+          </Route>
+          <Route path="/category/:categoryName/:id" element={<PrivateRoute />}>
+            <Route path="/category/:categoryName/:id" element={<AdPage />} />
+          </Route>
           <Route path="/category/:categoryName" element={<Category />} />
-          <Route path="/category/:categoryName/:id" element={<AdPage />} />
+
           <Route path="/contact/:adName" element={<Contact />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/offers" element={<Offers />} />
           <Route path="/forgotenPass" element={<ForgotPassword />} />
-          <Route path="/create-ad" element={<CreateListing />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Navbar />

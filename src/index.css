@@ -766,12 +766,24 @@ button {
   justify-content: center;
   align-items: center;
 }
+
 .formButtonActive {
   color: #ffffff;
 }
 
 .flex {
   display: flex;
+  flex-wrap: wrap;
+}
+.delete {
+  display: flex;
+  justify-content: space-between;
+}
+.presentImage {
+  position: relative;
+  margin: 0 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .formInput,
