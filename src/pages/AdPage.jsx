@@ -55,7 +55,7 @@ function AdPage() {
               className="swiperSlideDiv"
               key={index}
               style={{
-                background: `url(${ad.imageUrls[index]}) center no-repeat`,
+                background: `url(${url}) center no-repeat`,
                 backgroundSize: "cover",
               }}
             >

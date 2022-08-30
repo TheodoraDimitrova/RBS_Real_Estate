@@ -167,215 +167,223 @@ function CreateListing() {
       </header>
       <main>
         <form onSubmit={onSubmit}>
-          <label htmlFor="formLabel">Sell / Rent</label>
-          <div className="formButtons">
-            <button
-              id="type"
-              type="button"
-              value="sell"
-              onClick={onTransform}
-              className={
-                type === "sell" ? "formButtonActive btn-grad" : "formButton"
-              }
-            >
-              Sell
-            </button>
-            <button
-              id="type"
-              type="button"
-              value="rent"
-              onClick={onTransform}
-              className={
-                type === "rent" ? "formButtonActive btn-grad" : "formButton"
-              }
-            >
-              Rent
-            </button>
-          </div>
-          <label htmlFor="formLabel">Name</label>
-
-          <input
-            className="formInputName"
-            type="text"
-            id="name"
-            value={name}
-            maxLength="50"
-            minLength="10"
-            required="required"
-            onChange={onTransform}
-          />
-
-          <div className="formRooms flex">
-            <div>
-              <label htmlFor="formLabel">Bedrooms</label>
-              <input
-                className="formInputSmall"
-                type="number"
-                id="bedrooms"
-                value={bedrooms}
-                min="1"
-                max="10"
-                required="required"
-                onChange={onTransform}
-              />
-            </div>
-            <div>
-              <label htmlFor="formLabel">Bathrooms</label>
-              <input
-                className="formInputSmall"
-                type="number"
-                id="bathrooms"
-                value={bathrooms}
-                min="1"
-                max="10"
-                required="required"
-                onChange={onTransform}
-              />
-            </div>
-          </div>
-
-          <label htmlFor="formLabel">Parking Spots</label>
-          <div className="formButtons">
-            <button
-              id="parking"
-              type="button"
-              value={true}
-              onClick={onTransform}
-              className={parking ? "formButtonActive btn-grad" : "formButton"}
-            >
-              Yes
-            </button>
-            <button
-              id="parking"
-              type="button"
-              value={false}
-              onClick={onTransform}
-              className={
-                !parking && parking !== null
-                  ? "formButtonActive btn-grad"
-                  : "formButton"
-              }
-            >
-              No
-            </button>
-          </div>
-          {/* furnished */}
-          <label htmlFor="formLabel">Furnished</label>
-          <div className="formButtons">
-            <button
-              id="furnished"
-              type="button"
-              value={true}
-              onClick={onTransform}
-              className={furnished ? "formButtonActive btn-grad" : "formButton"}
-            >
-              Yes
-            </button>
-            <button
-              id="furnished"
-              type="button"
-              value={false}
-              onClick={onTransform}
-              className={
-                !furnished && furnished !== null
-                  ? "formButtonActive btn-grad"
-                  : "formButton"
-              }
-            >
-              No
-            </button>
-          </div>
-          {/* address */}
-          <label htmlFor="formLabel">Address</label>
-          <input
-            className="formInputName"
-            type="text"
-            id="address"
-            value={address}
-            required="required"
-            onChange={onTransform}
-          />
-
-          {/* Offer */}
-          <label htmlFor="formLabel">Offer</label>
-          <div className="formButtons">
-            <button
-              id="offer"
-              type="button"
-              value={true}
-              onClick={onTransform}
-              className={offer ? "formButtonActive btn-grad" : "formButton "}
-            >
-              Yes
-            </button>
-            <button
-              id="offer"
-              type="button"
-              value={false}
-              onClick={onTransform}
-              className={
-                !offer && offer !== null
-                  ? "formButtonActive btn-grad"
-                  : "formButton "
-              }
-            >
-              No
-            </button>
-          </div>
-
           <div>
-            <label htmlFor="formLabel">Regular Price</label>
-            <div className="formPriceDiv">
-              <input
-                className="formInputSmall"
-                type="number"
-                id="regularPrice"
-                min="100"
-                max="10000000"
-                value={regularPrice}
-                required="required"
-                onChange={onTransform}
-              />
-              {type === "rent" && <p className="formPriceText"> BGN / Month</p>}
+            <label htmlFor="formLabel">Sell / Rent</label>
+            <div className="formButtons">
+              <button
+                id="type"
+                type="button"
+                value="sell"
+                onClick={onTransform}
+                className={
+                  type === "sell" ? "formButtonActive btn-grad" : "formButton"
+                }
+              >
+                Sell
+              </button>
+              <button
+                id="type"
+                type="button"
+                value="rent"
+                onClick={onTransform}
+                className={
+                  type === "rent" ? "formButtonActive btn-grad" : "formButton"
+                }
+              >
+                Rent
+              </button>
+            </div>
+            <label htmlFor="formLabel">Name</label>
+
+            <input
+              className="formInputName"
+              type="text"
+              id="name"
+              value={name}
+              maxLength="50"
+              minLength="10"
+              required="required"
+              onChange={onTransform}
+            />
+
+            <div className="formRooms flex">
+              <div>
+                <label htmlFor="formLabel">Bedrooms</label>
+                <input
+                  className="formInputSmall"
+                  type="number"
+                  id="bedrooms"
+                  value={bedrooms}
+                  min="1"
+                  max="10"
+                  required="required"
+                  onChange={onTransform}
+                />
+              </div>
+              <div>
+                <label htmlFor="formLabel">Bathrooms</label>
+                <input
+                  className="formInputSmall"
+                  type="number"
+                  id="bathrooms"
+                  value={bathrooms}
+                  min="1"
+                  max="10"
+                  required="required"
+                  onChange={onTransform}
+                />
+              </div>
+            </div>
+
+            <label htmlFor="formLabel">Parking Spots</label>
+            <div className="formButtons">
+              <button
+                id="parking"
+                type="button"
+                value={true}
+                onClick={onTransform}
+                className={parking ? "formButtonActive btn-grad" : "formButton"}
+              >
+                Yes
+              </button>
+              <button
+                id="parking"
+                type="button"
+                value={false}
+                onClick={onTransform}
+                className={
+                  !parking && parking !== null
+                    ? "formButtonActive btn-grad"
+                    : "formButton"
+                }
+              >
+                No
+              </button>
+            </div>
+            {/* furnished */}
+            <label htmlFor="formLabel">Furnished</label>
+            <div className="formButtons">
+              <button
+                id="furnished"
+                type="button"
+                value={true}
+                onClick={onTransform}
+                className={
+                  furnished ? "formButtonActive btn-grad" : "formButton"
+                }
+              >
+                Yes
+              </button>
+              <button
+                id="furnished"
+                type="button"
+                value={false}
+                onClick={onTransform}
+                className={
+                  !furnished && furnished !== null
+                    ? "formButtonActive btn-grad"
+                    : "formButton"
+                }
+              >
+                No
+              </button>
             </div>
           </div>
+          <div>
+            {/* address */}
+            <label htmlFor="formLabel">Address</label>
+            <input
+              className="formInputName"
+              type="text"
+              id="address"
+              value={address}
+              required="required"
+              onChange={onTransform}
+            />
 
-          {offer && (
-            <>
-              <label htmlFor="formLabel">Discounted Price</label>
+            {/* Offer */}
+            <label htmlFor="formLabel">Offer</label>
+            <div className="formButtons">
+              <button
+                id="offer"
+                type="button"
+                value={true}
+                onClick={onTransform}
+                className={offer ? "formButtonActive btn-grad" : "formButton "}
+              >
+                Yes
+              </button>
+              <button
+                id="offer"
+                type="button"
+                value={false}
+                onClick={onTransform}
+                className={
+                  !offer && offer !== null
+                    ? "formButtonActive btn-grad"
+                    : "formButton "
+                }
+              >
+                No
+              </button>
+            </div>
 
-              <input
-                className="formInputSmall"
-                type="number"
-                id="discountedPrice"
-                min="100"
-                max="10000000"
-                value={discountedPrice}
-                required={offer}
-                onChange={onTransform}
-              />
-            </>
-          )}
+            <div>
+              <label htmlFor="formLabel">Regular Price</label>
+              <div className="formPriceDiv">
+                <input
+                  className="formInputSmall"
+                  type="number"
+                  id="regularPrice"
+                  min="100"
+                  max="10000000"
+                  value={regularPrice}
+                  required="required"
+                  onChange={onTransform}
+                />
+                {type === "rent" && (
+                  <p className="formPriceText"> BGN / Month</p>
+                )}
+              </div>
+            </div>
 
-          <label htmlFor="formLabel">Images</label>
-          <p className="imagesInfo">
-            The first image will be the cover (max: up to 6).
-          </p>
-          <input
-            type="file"
-            className="formInputFile"
-            id="images"
-            onChange={onTransform}
-            accept=".jpg,.png,.jpeg"
-            multiple
-            required
-          />
-          <button
-            type="submit"
-            className="formButton createListingButton btn-grad"
-          >
-            Create Advertisement Advertisement
-          </button>
+            {offer && (
+              <>
+                <label htmlFor="formLabel">Discounted Price</label>
+
+                <input
+                  className="formInputSmall"
+                  type="number"
+                  id="discountedPrice"
+                  min="100"
+                  max="10000000"
+                  value={discountedPrice}
+                  required={offer}
+                  onChange={onTransform}
+                />
+              </>
+            )}
+
+            <label htmlFor="formLabel">Images</label>
+            <p className="imagesInfo">
+              The first image will be the cover (max: up to 6).
+            </p>
+            <input
+              type="file"
+              className="formInputFile"
+              id="images"
+              onChange={onTransform}
+              accept=".jpg,.png,.jpeg"
+              multiple
+              required
+            />
+            <button
+              type="submit"
+              className="formButton createListingButton btn-grad"
+            >
+              Create Advertisement Advertisement
+            </button>
+          </div>
         </form>
       </main>
     </div>
