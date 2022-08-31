@@ -3,12 +3,20 @@ import { Link } from "react-router-dom";
 import rentImg from "../assets/jpg/rentCategoryImage.jpg";
 import sellImg from "../assets/jpg/sellCategoryImage.jpg";
 import ExploreSlider from "../components/ExploreSlider";
+import logo from "../assets/svg/logo.png";
 
 function Explore() {
   return (
     <div className="explore">
       <header>
-        <p className="pageHeader">Explore</p>
+        <img
+          src={logo}
+          className="App-logo"
+          alt="logo"
+          width="91px"
+          height="85px"
+        ></img>
+        <p className="pageHeader">Welcome to RBS Real Estate</p>
       </header>
       <main>
         <ExploreSlider />

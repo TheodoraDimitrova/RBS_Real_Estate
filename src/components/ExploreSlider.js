@@ -55,6 +55,7 @@ function ExploreSlider() {
           pagination={{ clickable: true }}
           navigation={true}
           a11y={true}
+          style={{ height: "400px" }}
         >
           {listings.map(({ data, id }) => (
             <SwiperSlide

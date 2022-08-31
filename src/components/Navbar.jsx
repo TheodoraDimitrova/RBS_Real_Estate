@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ReactComponent as OfferIcon } from "../assets/svg/localOfferIcon.svg";
 import { ReactComponent as ExploreIcon } from "../assets/svg/exploreIcon.svg";
 import { ReactComponent as PersonOutlineIcon } from "../assets/svg/personOutlineIcon.svg";
+import { ReactComponent as FeedbackIcon } from "../assets/svg/feedback.svg";
+
+import { VscFeedback } from "react-icons/vsc";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -65,6 +68,21 @@ function Navbar() {
               }
             >
               Profile
+            </p>
+          </li>
+          <li className="navbarListItem" onClick={() => navigate("/feedback")}>
+            <VscFeedback
+              className="h-36 w-36"
+              fill={pathMatchRoute("/feedback") ? "#2c2c2c" : "#8f8f8f"}
+            />
+            <p
+              className={
+                pathMatchRoute("/feedback")
+                  ? "navbarListItemNameActive"
+                  : "navbarListItemName"
+              }
+            >
+              Feedback
             </p>
           </li>
         </ul>

@@ -167,7 +167,7 @@ function CreateListing() {
       </header>
       <main>
         <form onSubmit={onSubmit}>
-          <div>
+          <div className="half left">
             <label htmlFor="formLabel">Sell / Rent</label>
             <div className="formButtons">
               <button
@@ -289,7 +289,7 @@ function CreateListing() {
               </button>
             </div>
           </div>
-          <div>
+          <div className="half right">
             {/* address */}
             <label htmlFor="formLabel">Address</label>
             <input
@@ -348,7 +348,7 @@ function CreateListing() {
             </div>
 
             {offer && (
-              <>
+              <div>
                 <label htmlFor="formLabel">Discounted Price</label>
 
                 <input
@@ -361,7 +361,7 @@ function CreateListing() {
                   required={offer}
                   onChange={onTransform}
                 />
-              </>
+              </div>
             )}
 
             <label htmlFor="formLabel">Images</label>
@@ -377,13 +377,13 @@ function CreateListing() {
               multiple
               required
             />
-            <button
-              type="submit"
-              className="formButton createListingButton btn-grad"
-            >
-              Create Advertisement Advertisement
-            </button>
           </div>
+          <button
+            type="submit"
+            className="formButton createListingButton btn-grad"
+          >
+            Create Advertisement
+          </button>
         </form>
       </main>
     </div>

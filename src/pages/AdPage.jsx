@@ -40,13 +40,13 @@ function AdPage() {
   if (loading) return <Spinner />;
 
   return (
-    <main>
+    <div className="pageContainer">
       <Swiper
         navigation={true}
         modules={[Navigation, Pagination, A11y]}
         slidesPerView={1}
         a11y={true}
-        style={{ height: "300px" }}
+        style={{ height: "800px" }}
         pagination={{ clickable: true }}
       >
         {ad.imageUrls.map((url, index) => (
@@ -56,7 +56,8 @@ function AdPage() {
               key={index}
               style={{
                 background: `url(${url}) center no-repeat`,
-                backgroundSize: "cover",
+                // backgroundSize: "cover",
+                backgroundSize: " 100% 100%",
               }}
             >
               <p className="swiperSlideText">{ad.name}</p>
@@ -118,7 +119,7 @@ function AdPage() {
           </Link>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

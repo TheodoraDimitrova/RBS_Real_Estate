@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.config";
 import { AiTwotoneDelete } from "react-icons/ai";
+import { toHaveStyle } from "@testing-library/jest-dom/dist/matchers";
 
 function EditAd() {
   const [loading, setLoading] = useState(true);
@@ -120,7 +121,7 @@ function EditAd() {
             (snapshot) => {
               const progress =
                 (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              console.log("Upload is " + progress + "% done");
+              toHaveStyle.info("Upload is " + progress + "% done");
               //eslint-disable-next-line
               switch (snapshot.state) {
                 case "paused":
@@ -412,6 +413,7 @@ function EditAd() {
             onChange={onTransform}
             accept=".jpg,.png,.jpeg"
             multiple
+            name="image[]"
           />
           <p>Uploaded Files</p>
           <div className="flex">
