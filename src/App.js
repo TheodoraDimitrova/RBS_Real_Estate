@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import PrivateRoute from "./components/PrivateRoute";
 import Explore from "./pages/Explore";
@@ -16,14 +16,14 @@ import AdPage from "./pages/AdPage";
 import Contact from "./pages/Contact";
 import EditAd from "./pages/EditAd";
 import Feedback from "./pages/Feedback";
+import { FeedbackProvider } from "./context/FeedbackContext";
 
 function App() {
   return (
     <>
-      <Router>
+      <FeedbackProvider>
         <Routes>
           <Route path="/" element={<Explore />} />
-
           <Route path="/profile" element={<PrivateRoute />}>
             <Route path="/profile" element={<Profile />} />
           </Route>
@@ -40,7 +40,9 @@ function App() {
 
           <Route path="/contact/:adName" element={<Contact />} />
           <Route path="/profile" element={<Profile />} />
+
           <Route path="/feedback" element={<Feedback />} />
+
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/offers" element={<Offers />} />
@@ -48,9 +50,11 @@ function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+
         <Navbar />
-      </Router>
-      <ToastContainer />
+
+        <ToastContainer />
+      </FeedbackProvider>
     </>
   );
 }

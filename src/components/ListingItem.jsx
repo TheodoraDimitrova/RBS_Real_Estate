@@ -53,7 +53,7 @@ export default function ListingItem({ listing, id, onDelete, onEdit }) {
           </div>
         </div>
       </Link>
-      {onDelete && (
+      {onEdit && (
         <EditIcon
           className="editIcon"
           fill="green"

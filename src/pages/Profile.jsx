@@ -18,7 +18,8 @@ import arrowRightIcon from "../assets/svg/keyboardArrowRightIcon.svg";
 import homeIcon from "../assets/svg/homeIcon.svg";
 import Spinner from "../components/Spinner";
 import ListingItem from "../components/ListingItem";
-import { getStorage, ref, deleteObject } from "firebase/storage";
+import Modal from "../components/shared/Modal";
+import { deleteObject, getStorage, ref } from "firebase/storage";
 
 function Profile() {
   const navigate = useNavigate();
@@ -26,6 +27,10 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [ads, SetAds] = useState([]);
   const [changeDetails, setChangeDetails] = useState(false);
+  const [popup, setPopup] = useState({
+    show: false,
+    id: null,
+  });
 
   const [formData, setFormData] = useState({
     name: auth.currentUser.displayName,
@@ -87,39 +92,48 @@ function Profile() {
       toast.error("Could not update profile details");
     }
   };
-  const onDelete = async (adId) => {
-    if (window.confirm("Are you sure?")) {
-      setLoading(true);
 
-      //delete images in firebase
-      const deleteImage = async (image) => {
-        return new Promise((resolve, reject) => {
-          const storage = getStorage();
-          const desertRef = ref(storage, `${image}`);
-          try {
-            deleteObject(desertRef);
-            setLoading(false);
-          } catch (error) {
-            toast.error("Uh-oh, an error occurred!");
-            setLoading(false);
-          }
-        });
-      };
-
-      const docRef = doc(db, "listings", adId);
-      const docSnap = await getDoc(docRef);
-      const images = docSnap.data().imageUrls;
-
-      images.map(async (image) => {
-        await deleteImage(image);
+  const handleDeleteFalse = () => {
+    setPopup({
+      show: false,
+      id: null,
+    });
+  };
+  const onDelete = (id) => {
+    setPopup({
+      show: true,
+      id,
+    });
+  };
+  const handleDeleteTrue = async () => {
+    handleDeleteFalse();
+    setLoading({ show: true });
+    //delete images in firebase
+    const deleteImage = async (image) => {
+      return new Promise((resolve, reject) => {
+        const storage = getStorage();
+        const desertRef = ref(storage, `${image}`);
+        try {
+          deleteObject(desertRef);
+          setLoading(false);
+        } catch (error) {
+          toast.error("Uh-oh, an error occurred!");
+          setLoading(false);
+        }
       });
+    };
+    const docRef = doc(db, "listings", popup.id);
+    const docSnap = await getDoc(docRef);
+    const images = docSnap.data().imageUrls;
 
-      await deleteDoc(doc(db, "listings", adId));
-      const updatedListings = ads.filter((ad) => ad.id !== adId);
-      SetAds(updatedListings);
-      setLoading(false);
-      toast.success("Successfully deleted advertisement");
-    }
+    images.map(async (image) => {
+      await deleteImage(image);
+    });
+    await deleteDoc(doc(db, "listings", popup.id));
+    const updatedListings = ads.filter((ad) => ad.id !== popup.id);
+    SetAds(updatedListings);
+    setLoading(false);
+    toast.success("Successfully deleted advertisement");
   };
 
   const onEdit = (adId) => {
@@ -129,70 +143,77 @@ function Profile() {
   if (loading) return <Spinner />;
 
   return (
-    <div className="profile">
-      <header className="profileHeader">
-        <p className="pageHeader">My Profile</p>
-        <button className="logOut btn-grad" type="button" onClick={onLogout}>
-          Logout
-        </button>
-      </header>
-      <main>
-        <div className="profileDetailsHeader">
-          <p className="profileDetailsText">Personal Details</p>
-          <p
-            className="changePersonalDetails btn-grad"
-            onClick={() => {
-              changeDetails && onSubmit();
-              setChangeDetails((prevState) => !prevState);
-            }}
-          >
-            {changeDetails ? "Done" : "Change"}
-          </p>
-        </div>
-        <div className="profileCart">
-          <form>
-            <input
-              type="text"
-              id="name"
-              className={!changeDetails ? "profileName" : "profileNameActive"}
-              disabled={!changeDetails}
-              value={name}
-              onChange={onChange}
-            />
-            <input
-              type="text"
-              id="email"
-              className="profileEmail"
-              disabled="disabled"
-              value={email}
-              onChange={onChange}
-            />
-          </form>
-        </div>
-        <Link to="/create-ad" className="createListing">
-          <img src={homeIcon} alt="home" />
-          <p>Sell or Rent your home</p>
-          <img src={arrowRightIcon} alt="arrowRight" />
-        </Link>
+    <>
+      <Modal
+        handleDeleteFalse={handleDeleteFalse}
+        handleDeleteTrue={handleDeleteTrue}
+        popup={popup}
+      />
+      <div className="profile">
+        <header className="profileHeader">
+          <p className="pageHeader">My Profile</p>
+          <button className="logOut btn-grad" type="button" onClick={onLogout}>
+            Logout
+          </button>
+        </header>
+        <main>
+          <div className="profileDetailsHeader">
+            <p className="profileDetailsText">Personal Details</p>
+            <p
+              className="changePersonalDetails btn-grad"
+              onClick={() => {
+                changeDetails && onSubmit();
+                setChangeDetails((prevState) => !prevState);
+              }}
+            >
+              {changeDetails ? "Done" : "Change"}
+            </p>
+          </div>
+          <div className="profileCart">
+            <form>
+              <input
+                type="text"
+                id="name"
+                className={!changeDetails ? "profileName" : "profileNameActive"}
+                disabled={!changeDetails}
+                value={name}
+                onChange={onChange}
+              />
+              <input
+                type="text"
+                id="email"
+                className="profileEmail"
+                disabled="disabled"
+                value={email}
+                onChange={onChange}
+              />
+            </form>
+          </div>
+          <Link to="/create-ad" className="createListing">
+            <img src={homeIcon} alt="home" />
+            <p>Sell or Rent your home</p>
+            <img src={arrowRightIcon} alt="arrowRight" />
+          </Link>
 
-        {!loading && ads?.length > 0 && (
-          <>
-            <p className="listingsText">Your Advertismets</p>
-            <ul className="listingsList">
-              {ads.map((listing) => (
-                <ListingItem
-                  listing={listing.data}
-                  id={listing.id}
-                  key={listing.id}
-                  onDelete={() => onDelete(listing.id)}
-                  onEdit={() => onEdit(listing.id)}
-                />
-              ))}
-            </ul>
-          </>
-        )}
-      </main>
-    </div>
+          {!loading && ads?.length > 0 && (
+            <>
+              <p className="listingsText">Your Advertismets</p>
+              <ul className="listingsList">
+                {ads.map((listing) => (
+                  <ListingItem
+                    listing={listing.data}
+                    id={listing.id}
+                    key={listing.id}
+                    onDelete={() => onDelete(listing.id)}
+                    onEdit={() => onEdit(listing.id)}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
+        </main>
+      </div>
+    </>
   );
 }
 
