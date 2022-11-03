@@ -17,43 +17,49 @@ import Contact from "./pages/Contact";
 import EditAd from "./pages/EditAd";
 import Feedback from "./pages/Feedback";
 import { FeedbackProvider } from "./context/FeedbackContext";
+import { AdvertisementsProvider } from "./context/AdvertisementsContext";
 
 function App() {
   return (
     <>
       <FeedbackProvider>
-        <Routes>
-          <Route path="/" element={<Explore />} />
-          <Route path="/profile" element={<PrivateRoute />}>
+        <AdvertisementsProvider>
+          <Routes>
+            <Route path="/" element={<Explore />} />
+            <Route path="/profile" element={<PrivateRoute />}>
+              <Route path="/profile" element={<Profile />} />
+            </Route>
+            <Route path="/edit-ad/:adId" element={<PrivateRoute />}>
+              <Route path="/edit-ad/:adId" element={<EditAd />} />
+            </Route>
+            <Route path="/create-ad" element={<PrivateRoute />}>
+              <Route path="/create-ad" element={<CreateListing />} />
+            </Route>
+            <Route
+              path="/category/:categoryName/:id"
+              element={<PrivateRoute />}
+            >
+              <Route path="/category/:categoryName/:id" element={<AdPage />} />
+            </Route>
+            <Route path="/category/:categoryName" element={<Category />} />
+
+            <Route path="/contact/:adName" element={<Contact />} />
             <Route path="/profile" element={<Profile />} />
-          </Route>
-          <Route path="/edit-ad/:adId" element={<PrivateRoute />}>
-            <Route path="/edit-ad/:adId" element={<EditAd />} />
-          </Route>
-          <Route path="/create-ad" element={<PrivateRoute />}>
-            <Route path="/create-ad" element={<CreateListing />} />
-          </Route>
-          <Route path="/category/:categoryName/:id" element={<PrivateRoute />}>
-            <Route path="/category/:categoryName/:id" element={<AdPage />} />
-          </Route>
-          <Route path="/category/:categoryName" element={<Category />} />
 
-          <Route path="/contact/:adName" element={<Contact />} />
-          <Route path="/profile" element={<Profile />} />
+            <Route path="/feedback" element={<Feedback />} />
 
-          <Route path="/feedback" element={<Feedback />} />
+            <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/offers" element={<Offers />} />
+            <Route path="/forgotenPass" element={<ForgotPassword />} />
 
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/sign-up" element={<SignUp />} />
-          <Route path="/offers" element={<Offers />} />
-          <Route path="/forgotenPass" element={<ForgotPassword />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+          <Navbar />
 
-        <Navbar />
-
-        <ToastContainer />
+          <ToastContainer />
+        </AdvertisementsProvider>
       </FeedbackProvider>
     </>
   );

@@ -116,14 +116,14 @@ button {
 .removeIcon {
   cursor: pointer;
   position: absolute;
-  top: -3%;
-  right: -2%;
+  top: 0.6%;
+  right: 80px;
 }
 .editIcon {
   cursor: pointer;
   position: absolute;
-  top: -3.4%;
-  right: 20px;
+  top: 0.6%;
+  right: 50px;
 }
 
 .half {
@@ -278,7 +278,7 @@ w-36 {
 .showPassword {
   cursor: pointer;
   position: absolute;
-  top: -4%;
+  top: 15px;
   right: 1%;
   padding: 1rem;
 }
@@ -422,6 +422,8 @@ w-36 {
 @media (min-width: 1024px) {
   .swiperSlideText {
     font-size: 1.75rem;
+    top: 0px;
+    left: 0;
   }
 }
 @media (max-width: 750px) {
@@ -448,12 +450,18 @@ w-36 {
 @media (max-width: 750px) {
   .swiper {
     height: 200px !important;
+    border-radius: 20px;
   }
 }
 
 @media (min-width: 1024px) {
+  .swiper {
+    border-radius: 20px;
+  }
   .swiperSlidePrice {
     font-size: 1.25rem;
+    top: 72px;
+    left: 18px;
   }
 }
 
@@ -493,6 +501,10 @@ w-36 {
   align-items: center;
   margin-bottom: 1rem;
   position: relative;
+  padding: 20px;
+  background: rgb(0 0 0 / 11%);
+  border: 1px;
+  border-radius: 20px;
 }
 
 .categoryListingLink {
@@ -955,6 +967,9 @@ ul {
   border: none;
   font-size: 16px;
 }
+.feedInput::placeholder {
+  color: white;
+}
 
 .card {
   background-color: #fff;
@@ -963,6 +978,12 @@ ul {
   padding: 40px 50px;
   margin: 20px 0;
   position: relative;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 50px 10px;
+  }
 }
 
 .card.reverse {
@@ -1094,6 +1115,11 @@ input:focus {
   display: block;
   cursor: pointer;
 }
+@media (max-width: 600px) {
+  .btn {
+    margin: 10px 0;
+  }
+}
 
 .btn-primary {
   background-color: #202142;
@@ -1123,7 +1149,7 @@ input:focus {
 .message {
   padding-top: 10px;
   text-align: center;
-  color: #fff;
+  color: #c96f6f;
   margin-bottom: 20px;
 }
 
@@ -1185,7 +1211,11 @@ input:focus {
 
 @media (max-width: 600px) {
   .rating li {
-    margin: 10px 3px;
+    margin: 10px 16px;
+  }
+  .input-group {
+    flex-direction: column;
+    border: none;
   }
 
   .rating {
@@ -1194,10 +1224,14 @@ input:focus {
     justify-content: center;
     flex-wrap: wrap;
     margin: 30px 0 40px;
+    padding: 0;
   }
 
   .input-group input {
-    width: 80%;
+    width: 100%;
+    border: 1px solid white;
+    padding: 10px;
+    border-radius: 8px;
   }
 }
 

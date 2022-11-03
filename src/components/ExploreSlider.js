@@ -1,6 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
-import { db } from "../firebase.config";
 import { Navigation, Pagination, Scrollbar, A11y } from "swiper";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -9,35 +7,17 @@ import "swiper/css/pagination";
 import "swiper/css/scrollbar";
 import "swiper/css/a11y";
 import Spinner from "./Spinner";
-import { useState } from "react";
+import { useContext } from "react";
 import { useEffect } from "react";
+import AdvertisementsContext from "../context/AdvertisementsContext";
 
 function ExploreSlider() {
-  const [loading, setLoading] = useState(true);
-  const [listings, setListings] = useState(true);
-
+  const { loading, ads, fetchListings } = useContext(AdvertisementsContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchListings = async () => {
-      const listingRef = collection(db, "listings");
-      const q = query(listingRef, orderBy("timestamp", "desc"), limit(5));
-      const querySnap = await getDocs(q);
-
-      let listings = [];
-
-      querySnap.forEach((doc) => {
-        return listings.push({
-          id: doc.id,
-          data: doc.data(),
-        });
-      });
-
-      setListings(listings);
-      setLoading(false);
-    };
-
     fetchListings();
+    // eslint-disable-next-line
   }, []);
 
   if (loading) {
@@ -45,7 +25,7 @@ function ExploreSlider() {
   }
 
   return (
-    listings && (
+    ads && (
       <>
         <p className="exploreHeading">Recommended</p>
 
@@ -57,7 +37,7 @@ function ExploreSlider() {
           a11y={true}
           style={{ height: "400px" }}
         >
-          {listings.map(({ data, id }) => (
+          {ads.map(({ data, id }) => (
             <SwiperSlide
               key={id}
               onClick={() => navigate(`/category/${data.type}/${id}`)}

@@ -1,83 +1,20 @@
-import {
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  startAfter,
-  where,
-} from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { toast } from "react-toastify";
 import ListingItem from "../components/ListingItem";
 import Spinner from "../components/Spinner";
-import { db } from "../firebase.config";
+import AdvertisementsContext from "../context/AdvertisementsContext";
 
 export default function Category() {
-  const [listings, setListings] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { loading, ads, fetchAdsByCategoryName, lastVisibleAds, onMore } =
+    useContext(AdvertisementsContext);
+
   const params = useParams();
-  const [lastVisibleAds, setLastVisibleAds] = useState(null);
 
   useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        const q = query(
-          collection(db, "listings"),
-          where("type", "==", params.categoryName),
-          orderBy("timestamp", "desc"),
-          limit(10)
-        );
-        const querySnapshot = await getDocs(q);
-        const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-        setLastVisibleAds(lastVisible);
-
-        const listings = [];
-        querySnapshot.forEach((doc) => {
-          // doc.data() is never undefined for query doc snapshots
-          //   console.log(doc.id, " => ", doc.data());
-          return listings.push({
-            id: doc.id,
-            data: doc.data(),
-          });
-        });
-        setListings(listings);
-        setLoading(false);
-      } catch (error) {
-        toast.error("Something went wrong");
-      }
-    };
-
-    fetchListings();
-  }, [params.categoryName]);
-
-  const onMore = async () => {
-    try {
-      const q = query(
-        collection(db, "listings"),
-        where("type", "==", params.categoryName),
-        orderBy("timestamp", "desc"),
-        startAfter(lastVisibleAds),
-        limit(10)
-      );
-      const querySnapshot = await getDocs(q);
-      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-      setLastVisibleAds(lastVisible);
-
-      const listings = [];
-      querySnapshot.forEach((doc) => {
-        return listings.push({
-          id: doc.id,
-          data: doc.data(),
-        });
-      });
-      setListings((prevState) => [...prevState, ...listings]);
-      setLoading(false);
-    } catch (error) {
-      toast.error("Something went wrong");
-    }
-  };
+    console.log("in");
+    fetchAdsByCategoryName(params.categoryName);
+    // eslint-disable-next-line
+  }, []);
 
   return (
     <div className="category">
@@ -90,17 +27,20 @@ export default function Category() {
       </header>
       {loading ? (
         <Spinner />
-      ) : listings && listings.length > 0 ? (
+      ) : ads && ads.length > 0 ? (
         <>
           <main>
             <ul className="categoryListings">
-              {listings.map((item) => (
+              {ads.map((item) => (
                 <ListingItem key={item.id} listing={item.data} id={item.id} />
               ))}
             </ul>
           </main>
           {lastVisibleAds && (
-            <p className="loadMore btn-grad" onClick={onMore}>
+            <p
+              className="loadMore btn-grad"
+              onClick={() => onMore(params.categoryName)}
+            >
               Load More
             </p>
           )}
