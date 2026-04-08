@@ -9,7 +9,7 @@ import {
   getDocs,
   orderBy,
   query,
-  updateDoc,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
@@ -35,11 +35,23 @@ function Profile() {
   const [formData, setFormData] = useState({
     name: auth.currentUser.displayName,
     email: auth.currentUser.email,
+    phone: "",
   });
-  const { name, email } = formData;
+  const { name, email, phone } = formData;
 
   useEffect(() => {
     const fetchUserListings = async () => {
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      const userSnap = await getDoc(userDocRef);
+      if (userSnap.exists()) {
+        const u = userSnap.data();
+        setFormData((prev) => ({
+          ...prev,
+          name: u.name ?? auth.currentUser.displayName ?? prev.name,
+          phone: typeof u.phone === "string" ? u.phone : "",
+        }));
+      }
+
       const listingsRef = collection(db, "listings");
 
       const q = query(
@@ -63,6 +75,7 @@ function Profile() {
       setLoading(false);
     };
     fetchUserListings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per uid; displayName read inside callback
   }, [auth.currentUser.uid]);
 
   const onLogout = () => {
@@ -76,18 +89,23 @@ function Profile() {
       [e.target.id]: e.target.value,
     }));
   };
-  const onSubmit = async (e) => {
+  const onSubmit = async () => {
     try {
       if (auth.currentUser.displayName !== name) {
         await updateProfile(auth.currentUser, {
           displayName: name,
         });
-        //update in firestore
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userRef, {
-          name: name,
-        });
       }
+      await setDoc(
+        doc(db, "users", auth.currentUser.uid),
+        {
+          name,
+          email: auth.currentUser.email,
+          phone: phone.trim(),
+        },
+        { merge: true }
+      );
+      toast.success("Profile updated");
     } catch (error) {
       toast.error("Could not update profile details");
     }
@@ -186,6 +204,22 @@ function Profile() {
                 disabled="disabled"
                 value={email}
                 onChange={onChange}
+              />
+              <p className="profileFieldHint">
+                Phone is shown to people who use &quot;Contact owner&quot; on
+                your listings.
+              </p>
+              <input
+                type="tel"
+                id="phone"
+                className={
+                  !changeDetails ? "profilePhone" : "profilePhoneActive"
+                }
+                disabled={!changeDetails}
+                value={phone}
+                onChange={onChange}
+                autoComplete="tel"
+                placeholder="e.g. +359 88 000 0000"
               />
             </form>
           </div>

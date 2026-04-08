@@ -3,67 +3,124 @@ import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { db } from "../firebase.config";
+import Spinner from "../components/Spinner";
+import { phoneToTelHref } from "../utils/contact";
 
 function Contact() {
-  const [message, SetMessage] = useState("");
-  const [owner, SetOwner] = useState(null);
+  const [message, setMessage] = useState("");
+  const [owner, setOwner] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const params = useParams();
+  const landlordId = params.adName;
+  const adTitle = searchParams.get("adName") || "Listing";
 
   useEffect(() => {
+    let cancelled = false;
+
     const getOwner = async () => {
-      const docRef = doc(db, "users", params.adName);
+      setLoading(true);
+      const docRef = doc(db, "users", landlordId);
       const docSnap = await getDoc(docRef);
 
+      if (cancelled) return;
+
       if (docSnap.exists()) {
-        SetOwner(docSnap.data());
+        setOwner(docSnap.data());
       } else {
-        toast.error("Could not get owner details");
+        setOwner(null);
+        toast.error("Could not load owner details");
       }
+      setLoading(false);
     };
+
     getOwner();
-  }, [params.adName]);
-  const onSubmit = (e) => {
-    e.preventDefault();
-    console.log("Contact owner on click");
-  };
-  const onType = (e) => SetMessage(e.target.value);
+    return () => {
+      cancelled = true;
+    };
+  }, [landlordId]);
+
+  const onType = (e) => setMessage(e.target.value);
+
+  const phoneRaw =
+    owner && typeof owner.phone === "string" ? owner.phone.trim() : "";
+  const telHref = phoneRaw ? phoneToTelHref(phoneRaw) : "";
+
+  const mailHref = owner?.email
+    ? `mailto:${encodeURIComponent(owner.email)}?subject=${encodeURIComponent(
+        `About: ${adTitle}`
+      )}&body=${encodeURIComponent(message)}`
+    : null;
 
   return (
-    <div className="pageContainer">
+    <div className="contactPage">
       <header>
-        <p className="pageHeader">Contact Owner</p>
+        <p className="pageHeader">Contact owner</p>
+        <p className="contactMuted">Regarding: {adTitle}</p>
       </header>
-      {owner !== null && (
+
+      {loading ? (
+        <Spinner />
+      ) : owner ? (
         <main>
-          <div className="contactlandLoard">
-            <p className="landLoardName">Name for Contact {owner?.name}</p>
+          <div className="contactOwnerCard">
+            <p className="contactOwnerCardTitle">Owner</p>
+            <p className="contactOwnerName">{owner.name || "—"}</p>
+            {owner.email && (
+              <p className="contactOwnerRow">
+                Email:{" "}
+                <a href={`mailto:${owner.email}`}>{owner.email}</a>
+              </p>
+            )}
+            {phoneRaw ? (
+              <p className="contactOwnerRow">
+                Phone:{" "}
+                {telHref ? (
+                  <a href={`tel:${telHref}`}>{phoneRaw}</a>
+                ) : (
+                  <span>{phoneRaw}</span>
+                )}
+              </p>
+            ) : (
+              <p className="contactMuted">
+                This owner has not added a phone number yet. You can still
+                reach them by email.
+              </p>
+            )}
           </div>
-          <form onSubmit={onSubmit}>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
+          >
             <label htmlFor="message" className="messageLabel">
-              Tape your message here
+              Your message (optional — included in the email draft)
             </label>
             <textarea
               name="message"
               id="message"
               cols="10"
-              rows="10"
+              rows="8"
               className="textarea"
               value={message}
               onChange={onType}
             />
-            <a
-              href={`mailto:${owner.email}?subject=${searchParams.get(
-                "adName"
-              )}&body=${message}`}
-            >
-              <button className="btn-grad" type="button">
-                E-Mail to {owner.name}
-              </button>
-            </a>
+            <div className="contactActions">
+              {mailHref && (
+                <a href={mailHref} className="btn-grad">
+                  Open email to {owner.name || "owner"}
+                </a>
+              )}
+              {phoneRaw && telHref && (
+                <a href={`tel:${telHref}`} className="btn-grad">
+                  Call {phoneRaw}
+                </a>
+              )}
+            </div>
           </form>
         </main>
-      )}
+      ) : null}
     </div>
   );
 }

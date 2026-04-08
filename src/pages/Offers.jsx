@@ -16,6 +16,7 @@ import { db } from "../firebase.config";
 export default function Offers() {
   const [listings, setListings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
 
   const [lastVisibleAds, setLastVisibleAds] = useState();
 
@@ -29,6 +30,7 @@ export default function Offers() {
           limit(10)
         );
         const querySnapshot = await getDocs(q);
+        setHasMore(querySnapshot.docs.length === 10);
         const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
         setLastVisibleAds(lastVisible);
         const listings = [];
@@ -58,6 +60,7 @@ export default function Offers() {
         limit(10)
       );
       const querySnapshot = await getDocs(q);
+      setHasMore(querySnapshot.docs.length === 10);
       const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
       setLastVisibleAds(lastVisible);
 
@@ -95,7 +98,7 @@ export default function Offers() {
       ) : (
         <p>There are no current offers</p>
       )}
-      {lastVisibleAds && (
+      {hasMore && (
         <p className="loadMore btn-grad" onClick={onMore}>
           Load More
         </p>

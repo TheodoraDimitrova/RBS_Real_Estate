@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import {
   getStorage,
@@ -9,17 +9,25 @@ import {
 } from "firebase/storage";
 import { useNavigate, useParams } from "react-router-dom";
 import Spinner from "../components/Spinner";
+import ListingAdForm from "../components/ListingAdForm";
 import { toast } from "react-toastify";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.config";
-import { AiTwotoneDelete } from "react-icons/ai";
-import { toHaveStyle } from "@testing-library/jest-dom/dist/matchers";
+import { useFileListPreviews } from "../hooks/useFileListPreviews";
+import { MAX_LISTING_IMAGES } from "../constants/listings";
 
 function EditAd() {
   const [loading, setLoading] = useState(true);
   const [imageUrls, setImageUrls] = useState([]);
   const navigate = useNavigate();
   const params = useParams();
+  const imagesInputRef = useRef(null);
+  const imageUrlsRef = useRef([]);
+  const [newImagesOverLimit, setNewImagesOverLimit] = useState(false);
+
+  useEffect(() => {
+    imageUrlsRef.current = imageUrls;
+  }, [imageUrls]);
 
   const [formData, setFormData] = useState({
     type: "sell",
@@ -29,11 +37,12 @@ function EditAd() {
     parking: false,
     furnished: false,
     address: "",
+    description: "",
     offer: true,
     regularPrice: 0,
     discountedPrice: 0,
     imageUrls: [],
-    images: {},
+    images: [],
   });
 
   const {
@@ -44,11 +53,11 @@ function EditAd() {
     offer,
     regularPrice,
     discountedPrice,
-
     images,
     parking,
     furnished,
     address,
+    description,
   } = formData;
 
   useEffect(() => {
@@ -57,8 +66,9 @@ function EditAd() {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setFormData(docSnap.data());
-        setImageUrls(docSnap.data().imageUrls);
+        const data = docSnap.data();
+        setFormData(data);
+        setImageUrls(Array.isArray(data.imageUrls) ? data.imageUrls : []);
         setLoading(false);
       }
     };
@@ -95,20 +105,25 @@ function EditAd() {
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    if (offer && discountedPrice >= regularPrice) {
-      setLoading(false);
-      toast.error("Discounted Price needs to be less than regular Price");
-      return;
+    if (offer) {
+      const reg = Number(regularPrice);
+      const disc = Number(discountedPrice);
+      if (Number.isFinite(reg) && Number.isFinite(disc) && disc >= reg) {
+        setLoading(false);
+        toast.error("Discounted Price needs to be less than regular Price");
+        return;
+      }
     }
 
-    if (images !== undefined) {
-      if (images.length > 6) {
+    if (Array.isArray(images) && images.length > 0) {
+      if (imageUrls.length + images.length > MAX_LISTING_IMAGES) {
         setLoading(false);
-        toast.error(`Max 6 images, up to 2Mb`);
+        toast.error(
+          `Maximum ${MAX_LISTING_IMAGES} images per listing in total.`
+        );
         return;
       }
 
-      //store images in firebase
       const storeImage = async (image) => {
         return new Promise((resolve, reject) => {
           const storage = getStorage();
@@ -121,7 +136,7 @@ function EditAd() {
             (snapshot) => {
               const progress =
                 (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              toHaveStyle.info("Upload is " + progress + "% done");
+              console.log("Upload is " + progress + "% done");
               //eslint-disable-next-line
               switch (snapshot.state) {
                 case "paused":
@@ -145,16 +160,16 @@ function EditAd() {
       };
 
       const urls = await Promise.all(
-        [...images].map((image) => storeImage(image))
+        images.map((image) => storeImage(image))
       ).catch(() => {
         setLoading(false);
         toast.error("Images could not upload,max size 2Mb or less");
         return;
       });
       const formDataCopy = {
-        //add or delete some data from formData before update
         ...formData,
         imageUrls: [...urls, ...imageUrls],
+        description: String(formData.description ?? "").trim(),
       };
       delete formDataCopy.images;
       !formData.offer && delete formDataCopy.discountedPrice;
@@ -166,9 +181,9 @@ function EditAd() {
       setLoading(false);
     } else {
       const formDataCopy = {
-        //add or delete some data from formData before update
         ...formData,
         imageUrls: imageUrls,
+        description: String(formData.description ?? "").trim(),
       };
       delete formDataCopy.images;
       !formData.offer && delete formDataCopy.discountedPrice;
@@ -182,7 +197,7 @@ function EditAd() {
   };
 
   const onTransform = (e) => {
-    let boolean = null; //check if is boolean
+    let boolean = null;
     if (e.target.value === "true") {
       boolean = true;
     }
@@ -190,259 +205,111 @@ function EditAd() {
       boolean = false;
     }
     if (e.target.files) {
-      //if is files
-      setFormData((prevState) => ({
-        ...prevState,
-        images: e.target.files,
-      }));
+      const picked = Array.from(e.target.files);
+      const published = Array.isArray(imageUrlsRef.current)
+        ? imageUrlsRef.current.length
+        : 0;
+      const remaining = Math.max(0, MAX_LISTING_IMAGES - published);
+
+      if (remaining === 0) {
+        toast.error(
+          `This listing already has the maximum of ${MAX_LISTING_IMAGES} images. Remove some before adding new ones.`
+        );
+        e.target.value = "";
+        setNewImagesOverLimit(false);
+        setFormData((prevState) => ({ ...prevState, images: [] }));
+        return;
+      }
+
+      if (picked.length > remaining) {
+        toast.warn(
+          `You can add up to ${remaining} more image(s) (${MAX_LISTING_IMAGES} total). Extra files were not added.`
+        );
+        setNewImagesOverLimit(true);
+        setFormData((prevState) => ({
+          ...prevState,
+          images: picked.slice(0, remaining),
+        }));
+      } else {
+        setNewImagesOverLimit(false);
+        setFormData((prevState) => ({
+          ...prevState,
+          images: picked,
+        }));
+      }
     }
-    // text,boolean, numbers
     if (!e.target.files) {
+      const key = e.target.id || e.target.name;
+      if (!key) return;
       setFormData((prevState) => ({
         ...prevState,
-        [e.target.id]: boolean ?? e.target.value,
+        [key]: boolean ?? e.target.value,
       }));
     }
   };
 
+  const newImageList = Array.isArray(images) ? images : [];
+  const newImageCount = newImageList.length;
+  const newImagePreviewUrls = useFileListPreviews(
+    newImageCount > 0 ? newImageList : null
+  );
+
+  useEffect(() => {
+    const published = Array.isArray(imageUrls) ? imageUrls.length : 0;
+    if (newImageCount === 0 && imagesInputRef.current) {
+      imagesInputRef.current.value = "";
+    }
+    if (published + newImageCount < MAX_LISTING_IMAGES) {
+      setNewImagesOverLimit(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- imageUrls.length only; avoid resetting on array identity churn
+  }, [newImageCount, imageUrls.length]);
+
+  const removePendingImage = (index) => {
+    setFormData((prev) => {
+      const list = Array.isArray(prev.images) ? prev.images : [];
+      return { ...prev, images: list.filter((_, i) => i !== index) };
+    });
+  };
+
   if (loading) return <Spinner />;
 
+  const canAddMore = Math.max(0, MAX_LISTING_IMAGES - imageUrls.length);
+
   return (
-    <div className="profile">
-      <header>
-        <p className="pageHeader">Edit your Advertisement</p>
-      </header>
-      <main>
-        <form onSubmit={onSubmit}>
-          <label htmlFor="formLabel">Sell / Rent</label>
-          <div className="formButtons">
-            <button
-              id="type"
-              type="button"
-              value="sell"
-              onClick={onTransform}
-              className={
-                type === "sell" ? "formButtonActive btn-grad" : "formButton"
-              }
-            >
-              Sell
-            </button>
-            <button
-              id="type"
-              type="button"
-              value="rent"
-              onClick={onTransform}
-              className={
-                type === "rent" ? "formButtonActive btn-grad" : "formButton"
-              }
-            >
-              Rent
-            </button>
-          </div>
-          <label htmlFor="formLabel">Name</label>
-          <input
-            className="formInputName"
-            type="text"
-            id="name"
-            value={name}
-            maxLength="32"
-            minLength="10"
-            required="required"
-            onChange={onTransform}
-          />
-          <div className="formRooms flex">
-            <div>
-              <label htmlFor="formLabel">Bedrooms</label>
-              <input
-                className="formInputSmall"
-                type="number"
-                id="bedrooms"
-                value={bedrooms}
-                min="1"
-                max="10"
-                required="required"
-                onChange={onTransform}
-              />
-            </div>
-            <div>
-              <label htmlFor="formLabel">Bathrooms</label>
-              <input
-                className="formInputSmall"
-                type="number"
-                id="bathrooms"
-                value={bathrooms}
-                min="1"
-                max="10"
-                required="required"
-                onChange={onTransform}
-              />
-            </div>
-          </div>
-
-          <label htmlFor="formLabel">Parking Spots</label>
-          <div className="formButtons">
-            <button
-              id="parking"
-              type="button"
-              value={true}
-              onClick={onTransform}
-              className={parking ? "formButtonActive btn-grad" : "formButton"}
-            >
-              Yes
-            </button>
-            <button
-              id="parking"
-              type="button"
-              value={false}
-              onClick={onTransform}
-              className={
-                !parking && parking !== null
-                  ? "formButtonActive btn-grad"
-                  : "formButton"
-              }
-            >
-              No
-            </button>
-          </div>
-          {/* furnished */}
-          <label htmlFor="formLabel">Furnished</label>
-          <div className="formButtons">
-            <button
-              id="furnished"
-              type="button"
-              value={true}
-              onClick={onTransform}
-              className={furnished ? "formButtonActive btn-grad" : "formButton"}
-            >
-              Yes
-            </button>
-            <button
-              id="furnished"
-              type="button"
-              value={false}
-              onClick={onTransform}
-              className={
-                !furnished && furnished !== null
-                  ? "formButtonActive btn-grad"
-                  : "formButton"
-              }
-            >
-              No
-            </button>
-          </div>
-          {/* address */}
-          <label htmlFor="formLabel">Address</label>
-          <input
-            className="formInputName"
-            type="text"
-            id="address"
-            value={address}
-            required="required"
-            onChange={onTransform}
-          />
-
-          {/* Offer */}
-          <label htmlFor="formLabel">Offer</label>
-          <div className="formButtons">
-            <button
-              id="offer"
-              type="button"
-              value={true}
-              onClick={onTransform}
-              className={offer ? "formButtonActive btn-grad" : "formButton "}
-            >
-              Yes
-            </button>
-            <button
-              id="offer"
-              type="button"
-              value={false}
-              onClick={onTransform}
-              className={
-                !offer && offer !== null
-                  ? "formButtonActive btn-grad"
-                  : "formButton "
-              }
-            >
-              No
-            </button>
-          </div>
-
-          <div>
-            <label htmlFor="formLabel">Regular Price</label>
-            <div className="formPriceDiv">
-              <input
-                className="formInputSmall"
-                type="number"
-                id="regularPrice"
-                min="100"
-                max="10000000"
-                value={regularPrice}
-                required="required"
-                onChange={onTransform}
-              />
-              {type === "rent" && <p className="formPriceText"> BGN / Month</p>}
-            </div>
-          </div>
-
-          {offer && (
-            <>
-              <label htmlFor="formLabel">Discounted Price</label>
-
-              <input
-                className="formInputSmall"
-                type="number"
-                id="discountedPrice"
-                min="100"
-                max="10000000"
-                value={discountedPrice}
-                required={offer}
-                onChange={onTransform}
-              />
-            </>
-          )}
-
-          <label htmlFor="formLabel">Images</label>
-          <p className="imagesInfo">
-            The first image will be the cover (max: up to 6).
-          </p>
-          <input
-            type="file"
-            className="formInputFile"
-            id="images"
-            onChange={onTransform}
-            accept=".jpg,.png,.jpeg"
-            multiple
-            name="image[]"
-          />
-          <p>Uploaded Files</p>
-          <div className="flex">
-            {imageUrls.length &&
-              imageUrls.map((image, index) => (
-                <div key={index} className="presentImage">
-                  <img width="75px" height="75px" src={image} alt={image} />
-
-                  <button
-                    type="button"
-                    className="delete"
-                    id={image}
-                    onClick={deleteSingleImage}
-                  >
-                    <AiTwotoneDelete />
-                    Delete
-                  </button>
-                </div>
-              ))}
-          </div>
-          <button
-            type="submit"
-            className="formButton createListingButton btn-grad"
-          >
-            Edit Advertisement
-          </button>
-        </form>
-      </main>
-    </div>
+    <ListingAdForm
+      ariaPrefix="edit"
+      pageTitle="Edit advertisement"
+      pageLead={`Update details, prices, or add photos — up to ${MAX_LISTING_IMAGES} images total (max 2 MB each).`}
+      submitLabel="Save changes"
+      submitHint="Updates apply immediately on the listing page."
+      onSubmit={onSubmit}
+      onFieldChange={onTransform}
+      values={{
+        type,
+        name,
+        bedrooms,
+        bathrooms,
+        parking,
+        furnished,
+        address,
+        description,
+        offer,
+        regularPrice,
+        discountedPrice,
+      }}
+      images={{
+        mode: "edit",
+        inputRef: imagesInputRef,
+        overLimit: newImagesOverLimit,
+        pendingCount: newImageCount,
+        previewUrls: newImagePreviewUrls,
+        onRemovePending: removePendingImage,
+        publishedUrls: imageUrls,
+        onDeletePublished: deleteSingleImage,
+        canAddMore,
+      }}
+    />
   );
 }
 

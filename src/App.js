@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import PrivateRoute from "./components/PrivateRoute";
 import Explore from "./pages/Explore";
@@ -18,12 +18,52 @@ import EditAd from "./pages/EditAd";
 import Feedback from "./pages/Feedback";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { AdvertisementsProvider } from "./context/AdvertisementsContext";
+import { useEffect, useState } from "react";
+import { useAuthStatus } from "./hooks/useAuthStatus";
+import AuthNoticeModal from "./components/AuthNoticeModal";
 
 function App() {
+  const location = useLocation();
+  const { loggedIn, checkingStatus } = useAuthStatus();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalDismissed, setAuthModalDismissed] = useState(() => {
+    return localStorage.getItem("authNoticeDismissed") === "true";
+  });
+
+  const isPrivatePath = (pathname) =>
+    pathname === "/profile" ||
+    pathname === "/create-ad" ||
+    pathname.startsWith("/edit-ad/") ||
+    /^\/category\/[^/]+\/[^/]+$/.test(pathname);
+
+  useEffect(() => {
+    if (
+      checkingStatus ||
+      loggedIn ||
+      authModalDismissed ||
+      isPrivatePath(location.pathname)
+    ) {
+      setShowAuthModal(false);
+      return;
+    }
+
+    setShowAuthModal(true);
+  }, [checkingStatus, loggedIn, authModalDismissed, location.pathname]);
+
+  const handleCloseAuthModal = () => {
+    localStorage.setItem("authNoticeDismissed", "true");
+    setAuthModalDismissed(true);
+    setShowAuthModal(false);
+  };
+
   return (
     <>
       <FeedbackProvider>
         <AdvertisementsProvider>
+          <AuthNoticeModal
+            show={showAuthModal}
+            onClose={handleCloseAuthModal}
+          />
           <Routes>
             <Route path="/" element={<Explore />} />
             <Route path="/profile" element={<PrivateRoute />}>

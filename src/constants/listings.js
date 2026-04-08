@@ -1,0 +1,4 @@
+export const MAX_LISTING_IMAGES = 8;
+
+export const MIN_LISTING_DESCRIPTION = 30;
+export const MAX_LISTING_DESCRIPTION = 2000;

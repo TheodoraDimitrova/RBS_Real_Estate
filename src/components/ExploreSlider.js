@@ -51,7 +51,7 @@ function ExploreSlider() {
               >
                 <p className="swiperSlideText">{data.name}</p>
                 <p className="swiperSlidePrice">
-                  ${data.discountedPrice ?? data.regularPrice}
+                  {(data.discountedPrice ?? data.regularPrice).toLocaleString()} EUR
                   {"  "}
                   {data.type === "rent" && "/ month"}
                 </p>

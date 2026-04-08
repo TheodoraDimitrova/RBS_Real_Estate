@@ -2,7 +2,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ReactComponent as DeleteIcon } from "../assets/svg/deleteIcon.svg";
 import { ReactComponent as EditIcon } from "../assets/svg/editIcon.svg";
-import { ReactComponent as MoneyIcon } from "../assets/svg/money.svg";
 import bathtubIcon from "../assets/svg/bathtubIcon.svg";
 import bedIcon from "../assets/svg/bedIcon.svg";
 
@@ -13,29 +12,45 @@ export default function ListingItem({ listing, id, onDelete, onEdit }) {
         to={`/category/${listing.type}/${id}`}
         className="categoryListingLink"
       >
-        <img
-          src={listing.imageUrls[0]}
-          alt={listing.name}
-          className="categoryListingImg"
-        />
+        <div className="categoryListingImgWrap">
+          <img
+            src={listing.imageUrls[0]}
+            alt={listing.name}
+            className="categoryListingImg"
+          />
+          <span className="categoryTag">
+            {listing.type === "rent" ? "Rent" : "Sale"}
+          </span>
+        </div>
         <div className="categoryListingDetails">
           <p className="categoryListingLocation">{listing.location}</p>
           <p className="categoryListingName">{listing.name}</p>
           <p className="categoryListingPrice">
-            {listing.offer
-              ? listing.discountedPrice
+            {listing.offer ? (
+              <>
+                <span className="oldPrice">
+                  {listing.regularPrice
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+                  EUR
+                </span>
+                <span className="newPrice">
+                  {listing.discountedPrice
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+                  EUR
+                </span>
+                <span className="offerBadge">Offer</span>
+              </>
+            ) : (
+              <>
+                {listing.regularPrice
                   .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-              : listing.regularPrice
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-            <MoneyIcon
-              width="35px"
-              height="12px"
-              fill="#00cc66"
-              margin="right: 20px"
-            />
-            {listing.type === "rent" && "/Month"}
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+                EUR
+              </>
+            )}
+            {listing.type === "rent" && <span className="pricePeriod">/Month</span>}
           </p>
           <div className="categoryListingInfoDiv">
             <img src={bedIcon} alt="icon" />

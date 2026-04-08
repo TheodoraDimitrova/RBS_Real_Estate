@@ -11,7 +11,6 @@ export default function Category() {
   const params = useParams();
 
   useEffect(() => {
-    console.log("in");
     fetchAdsByCategoryName(params.categoryName);
     // eslint-disable-next-line
   }, []);

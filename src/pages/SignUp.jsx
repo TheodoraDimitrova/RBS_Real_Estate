@@ -18,10 +18,11 @@ function SignUp() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
   });
 
-  const { name, email, password } = formData;
+  const { name, email, phone, password } = formData;
   const onChange = (e) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -44,6 +45,7 @@ function SignUp() {
       });
       const copyUser = { ...formData };
       delete copyUser.password;
+      copyUser.phone = (copyUser.phone || "").trim();
       copyUser.timestamp = serverTimestamp();
       await setDoc(doc(db, "users", user.uid), copyUser);
       navigate("/");
@@ -83,6 +85,15 @@ function SignUp() {
             id="email"
             value={email}
             onChange={onChange}
+          />
+          <input
+            type="tel"
+            className="phoneInput"
+            placeholder="Phone (optional — helps buyers reach you)"
+            id="phone"
+            value={phone}
+            onChange={onChange}
+            autoComplete="tel"
           />
           <div className="passwordInputDiv">
             <input

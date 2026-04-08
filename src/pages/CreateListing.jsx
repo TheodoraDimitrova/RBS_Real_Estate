@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   getStorage,
@@ -8,14 +8,19 @@ import {
 } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../components/Spinner";
+import ListingAdForm from "../components/ListingAdForm";
 import { toast } from "react-toastify";
 import { db } from "../firebase.config";
 import { addDoc, serverTimestamp, collection } from "firebase/firestore";
+import { useFileListPreviews } from "../hooks/useFileListPreviews";
+import { MAX_LISTING_IMAGES } from "../constants/listings";
 
 function CreateListing() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const auth = getAuth();
+  const imagesInputRef = useRef(null);
+  const [imagesOverLimit, setImagesOverLimit] = useState(false);
 
   const [formData, SetFormData] = useState({
     type: "sell",
@@ -25,10 +30,11 @@ function CreateListing() {
     parking: false,
     furnished: false,
     address: "",
+    description: "",
     offer: true,
     regularPrice: 0,
     discountedPrice: 0,
-    images: {},
+    images: [],
   });
 
   const {
@@ -43,6 +49,7 @@ function CreateListing() {
     parking,
     furnished,
     address,
+    description,
   } = formData;
 
   useEffect(() => {
@@ -54,7 +61,7 @@ function CreateListing() {
       }
     });
 
-    return unsub; //cancel all subscriptions and asynchronous tasks in a useEffect cleanup function.
+    return unsub;
     // eslint-disable-next-line
   }, []);
 
@@ -63,18 +70,28 @@ function CreateListing() {
 
     setLoading(true);
 
-    if (discountedPrice >= regularPrice) {
+    if (offer) {
+      const reg = Number(regularPrice);
+      const disc = Number(discountedPrice);
+      if (Number.isFinite(reg) && Number.isFinite(disc) && disc >= reg) {
+        setLoading(false);
+        toast.error("Discounted Price needs to be less than regular Price");
+        return;
+      }
+    }
+    if (!Array.isArray(images) || !images.length) {
       setLoading(false);
-      toast.error("Discounted Price needs to be less than regular Price");
+      toast.error("Please choose at least one image");
       return;
     }
-    if (images.maxLength > 6) {
+    if (images.length > MAX_LISTING_IMAGES) {
       setLoading(false);
-      toast.error("Max 6 images, up to 2Mb");
+      toast.error(
+        `Maximum ${MAX_LISTING_IMAGES} images per listing (up to 2 MB each).`
+      );
       return;
     }
 
-    //store images in firebase
     const storeImage = async (image) => {
       return new Promise((resolve, reject) => {
         const storage = getStorage();
@@ -111,7 +128,7 @@ function CreateListing() {
     };
 
     const imageUrls = await Promise.all(
-      [...images].map((image) => storeImage(image))
+      images.map((image) => storeImage(image))
     ).catch(() => {
       setLoading(false);
       toast.error("Images could not upload,max size 2Mb or less");
@@ -119,15 +136,15 @@ function CreateListing() {
     });
 
     const formDataCopy = {
-      //add or delete some data from formData before update
       ...formData,
       imageUrls,
       timestamp: serverTimestamp(),
+      description: String(formData.description ?? "").trim(),
     };
     delete formDataCopy.images;
     !formData.offer && delete formDataCopy.discountedPrice;
 
-    const docRef = await addDoc(collection(db, "listings"), formDataCopy); //addDoc create a document reference with an auto-generated ID
+    const docRef = await addDoc(collection(db, "listings"), formDataCopy);
 
     toast.success("Advertisement saved");
     navigate(`/category/${formData.type}/${docRef.id}`);
@@ -135,7 +152,7 @@ function CreateListing() {
   };
 
   const onTransform = (e) => {
-    let boolean = null; //check if is boolean
+    let boolean = null;
     if (e.target.value === "true") {
       boolean = true;
     }
@@ -143,250 +160,89 @@ function CreateListing() {
       boolean = false;
     }
     if (e.target.files) {
-      //if is files
-      SetFormData((prevState) => ({
-        ...prevState,
-        images: e.target.files,
-      }));
+      const picked = Array.from(e.target.files);
+      if (picked.length > MAX_LISTING_IMAGES) {
+        toast.warn(
+          `Maximum ${MAX_LISTING_IMAGES} images. Only the first ${MAX_LISTING_IMAGES} were added.`
+        );
+        setImagesOverLimit(true);
+        SetFormData((prevState) => ({
+          ...prevState,
+          images: picked.slice(0, MAX_LISTING_IMAGES),
+        }));
+      } else {
+        setImagesOverLimit(false);
+        SetFormData((prevState) => ({
+          ...prevState,
+          images: picked,
+        }));
+      }
     }
-    // text,boolean, numbers
     if (!e.target.files) {
+      const key = e.target.id || e.target.name;
+      if (!key) return;
       SetFormData((prevState) => ({
         ...prevState,
-        [e.target.id]: boolean ?? e.target.value,
+        [key]: boolean ?? e.target.value,
       }));
     }
+  };
+
+  const imageList = Array.isArray(images) ? images : [];
+  const pendingImageCount = imageList.length;
+  const imagePreviewUrls = useFileListPreviews(
+    pendingImageCount > 0 ? imageList : null
+  );
+
+  useEffect(() => {
+    if (pendingImageCount === 0 && imagesInputRef.current) {
+      imagesInputRef.current.value = "";
+    }
+    if (pendingImageCount < MAX_LISTING_IMAGES) {
+      setImagesOverLimit(false);
+    }
+  }, [pendingImageCount]);
+
+  const removePendingImage = (index) => {
+    SetFormData((prev) => {
+      const list = Array.isArray(prev.images) ? prev.images : [];
+      return { ...prev, images: list.filter((_, i) => i !== index) };
+    });
   };
 
   if (loading) return <Spinner />;
 
   return (
-    <div className="profile">
-      <header>
-        <p className="pageHeader">Create Advertising</p>
-      </header>
-      <main>
-        <form onSubmit={onSubmit}>
-          <div className="half left">
-            <label htmlFor="formLabel">Sell / Rent</label>
-            <div className="formButtons">
-              <button
-                id="type"
-                type="button"
-                value="sell"
-                onClick={onTransform}
-                className={
-                  type === "sell" ? "formButtonActive btn-grad" : "formButton"
-                }
-              >
-                Sell
-              </button>
-              <button
-                id="type"
-                type="button"
-                value="rent"
-                onClick={onTransform}
-                className={
-                  type === "rent" ? "formButtonActive btn-grad" : "formButton"
-                }
-              >
-                Rent
-              </button>
-            </div>
-            <label htmlFor="formLabel">Name</label>
-
-            <input
-              className="formInputName"
-              type="text"
-              id="name"
-              value={name}
-              maxLength="50"
-              minLength="10"
-              required="required"
-              onChange={onTransform}
-            />
-
-            <div className="formRooms flex">
-              <div>
-                <label htmlFor="formLabel">Bedrooms</label>
-                <input
-                  className="formInputSmall"
-                  type="number"
-                  id="bedrooms"
-                  value={bedrooms}
-                  min="1"
-                  max="10"
-                  required="required"
-                  onChange={onTransform}
-                />
-              </div>
-              <div>
-                <label htmlFor="formLabel">Bathrooms</label>
-                <input
-                  className="formInputSmall"
-                  type="number"
-                  id="bathrooms"
-                  value={bathrooms}
-                  min="1"
-                  max="10"
-                  required="required"
-                  onChange={onTransform}
-                />
-              </div>
-            </div>
-
-            <label htmlFor="formLabel">Parking Spots</label>
-            <div className="formButtons">
-              <button
-                id="parking"
-                type="button"
-                value={true}
-                onClick={onTransform}
-                className={parking ? "formButtonActive btn-grad" : "formButton"}
-              >
-                Yes
-              </button>
-              <button
-                id="parking"
-                type="button"
-                value={false}
-                onClick={onTransform}
-                className={
-                  !parking && parking !== null
-                    ? "formButtonActive btn-grad"
-                    : "formButton"
-                }
-              >
-                No
-              </button>
-            </div>
-            {/* furnished */}
-            <label htmlFor="formLabel">Furnished</label>
-            <div className="formButtons">
-              <button
-                id="furnished"
-                type="button"
-                value={true}
-                onClick={onTransform}
-                className={
-                  furnished ? "formButtonActive btn-grad" : "formButton"
-                }
-              >
-                Yes
-              </button>
-              <button
-                id="furnished"
-                type="button"
-                value={false}
-                onClick={onTransform}
-                className={
-                  !furnished && furnished !== null
-                    ? "formButtonActive btn-grad"
-                    : "formButton"
-                }
-              >
-                No
-              </button>
-            </div>
-          </div>
-          <div className="half right">
-            {/* address */}
-            <label htmlFor="formLabel">Address</label>
-            <input
-              className="formInputName"
-              type="text"
-              id="address"
-              value={address}
-              required="required"
-              onChange={onTransform}
-            />
-
-            {/* Offer */}
-            <label htmlFor="formLabel">Offer</label>
-            <div className="formButtons">
-              <button
-                id="offer"
-                type="button"
-                value={true}
-                onClick={onTransform}
-                className={offer ? "formButtonActive btn-grad" : "formButton "}
-              >
-                Yes
-              </button>
-              <button
-                id="offer"
-                type="button"
-                value={false}
-                onClick={onTransform}
-                className={
-                  !offer && offer !== null
-                    ? "formButtonActive btn-grad"
-                    : "formButton "
-                }
-              >
-                No
-              </button>
-            </div>
-
-            <div>
-              <label htmlFor="formLabel">Regular Price</label>
-              <div className="formPriceDiv">
-                <input
-                  className="formInputSmall"
-                  type="number"
-                  id="regularPrice"
-                  min="100"
-                  max="10000000"
-                  value={regularPrice}
-                  required="required"
-                  onChange={onTransform}
-                />
-                {type === "rent" && (
-                  <p className="formPriceText"> BGN / Month</p>
-                )}
-              </div>
-            </div>
-
-            {offer && (
-              <div>
-                <label htmlFor="formLabel">Discounted Price</label>
-
-                <input
-                  className="formInputSmall"
-                  type="number"
-                  id="discountedPrice"
-                  min="100"
-                  max="10000000"
-                  value={discountedPrice}
-                  required={offer}
-                  onChange={onTransform}
-                />
-              </div>
-            )}
-
-            <label htmlFor="formLabel">Images</label>
-            <p className="imagesInfo">
-              The first image will be the cover (max: up to 6).
-            </p>
-            <input
-              type="file"
-              className="formInputFile"
-              id="images"
-              onChange={onTransform}
-              accept=".jpg,.png,.jpeg"
-              multiple
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="formButton createListingButton btn-grad"
-          >
-            Create Advertisement
-          </button>
-        </form>
-      </main>
-    </div>
+    <ListingAdForm
+      ariaPrefix="create"
+      pageTitle="Create Advertising"
+      pageLead="Add clear photos and accurate details — buyers notice listings that feel complete and honest."
+      submitLabel="Create advertisement"
+      submitHint="You can edit or remove the listing later from your profile."
+      onSubmit={onSubmit}
+      onFieldChange={onTransform}
+      values={{
+        type,
+        name,
+        bedrooms,
+        bathrooms,
+        parking,
+        furnished,
+        address,
+        description,
+        offer,
+        regularPrice,
+        discountedPrice,
+      }}
+      images={{
+        mode: "create",
+        inputRef: imagesInputRef,
+        overLimit: imagesOverLimit,
+        pendingCount: pendingImageCount,
+        previewUrls: imagePreviewUrls,
+        onRemovePending: removePendingImage,
+      }}
+    />
   );
 }
 
