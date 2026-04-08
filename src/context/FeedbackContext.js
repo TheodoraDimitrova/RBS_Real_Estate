@@ -25,7 +25,6 @@ export const FeedbackProvider = ({ children }) => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [feedbacks, setFeedbacks] = useState([]);
-  const [lastVisibleRatings, setLastVisibleRatings] = useState();
   const [popup, setPopup] = useState({
     show: false,
     id: null,
@@ -45,8 +44,6 @@ export const FeedbackProvider = ({ children }) => {
           limit(10)
         );
         const querySnapshot = await getDocs(q);
-        const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-        setLastVisibleRatings(lastVisible);
         const ratings = [];
         querySnapshot.forEach((doc) => {
           return ratings.push({
