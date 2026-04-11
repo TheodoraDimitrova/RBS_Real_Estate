@@ -14,8 +14,9 @@ import { db } from "../firebase.config";
 import { addDoc, serverTimestamp, collection } from "firebase/firestore";
 import { useFileListPreviews } from "../hooks/useFileListPreviews";
 import { MAX_LISTING_IMAGES } from "../constants/listings";
+import { isOfferDiscountInvalid } from "../utils/offerPriceValidation";
 
-function CreateListing() {
+const CreateListing = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const auth = getAuth();
@@ -70,14 +71,10 @@ function CreateListing() {
 
     setLoading(true);
 
-    if (offer) {
-      const reg = Number(regularPrice);
-      const disc = Number(discountedPrice);
-      if (Number.isFinite(reg) && Number.isFinite(disc) && disc >= reg) {
-        setLoading(false);
-        toast.error("Discounted Price needs to be less than regular Price");
-        return;
-      }
+    if (offer && isOfferDiscountInvalid(regularPrice, discountedPrice)) {
+      setLoading(false);
+      toast.error("Discounted Price needs to be less than regular Price");
+      return;
     }
     if (!Array.isArray(images) || !images.length) {
       setLoading(false);
@@ -101,20 +98,7 @@ function CreateListing() {
         const uploadTask = uploadBytesResumable(storageRef, image);
         uploadTask.on(
           "state_changed",
-          (snapshot) => {
-            const progress =
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log("Upload is " + progress + "% done");
-            //eslint-disable-next-line
-            switch (snapshot.state) {
-              case "paused":
-                console.log("Upload is paused");
-                break;
-              case "running":
-                console.log("Upload is running");
-                break;
-            }
-          },
+          () => {},
           (error) => {
             reject(error);
           },
@@ -244,6 +228,6 @@ function CreateListing() {
       }}
     />
   );
-}
+};
 
 export default CreateListing;

@@ -1,3 +1,11 @@
-export default function Card({ children, reverse }) {
-  return <div className={`card reverse`}>{children}</div>;
-}
+const Card = ({ children, reverse }) => (
+  <div
+    className={
+      reverse ? "feedbackCard feedbackCard--review" : "feedbackCard"
+    }
+  >
+    {children}
+  </div>
+);
+
+export default Card;

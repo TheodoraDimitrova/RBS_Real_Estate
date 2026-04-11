@@ -5,15 +5,16 @@ import { getAuth } from "firebase/auth";
 import FeedbackContext from "../context/FeedbackContext";
 import { useContext } from "react";
 
-export default function FeedbackItem({ feedback, id, deleteFeedback }) {
+const FeedbackItem = ({ feedback, id, deleteFeedback }) => {
   const { editFeedback } = useContext(FeedbackContext);
   const auth = getAuth();
   return (
     <Card reverse={true}>
       <motion.div
-        className="num-display"
-        animate={{ rotateY: 360 }}
-        transition={{ delay: 0.1, duration: 1 }}
+        className="feedbackRatingBadge"
+        initial={{ scale: 0.9 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.05, duration: 0.25 }}
       >
         {feedback.rating}
       </motion.div>
@@ -22,26 +23,32 @@ export default function FeedbackItem({ feedback, id, deleteFeedback }) {
         ? auth.currentUser.uid === feedback.userRef && (
             <>
               <button
-                className="edit"
-                style={{ color: "#fff" }}
+                type="button"
+                className="feedbackItemBtn feedbackItemBtn--edit"
+                aria-label="Edit feedback"
                 onClick={() => editFeedback(feedback, id)}
               >
                 <FaRegEdit />
               </button>
 
               <button
+                type="button"
+                className="feedbackItemBtn feedbackItemBtn--delete"
+                aria-label="Delete feedback"
                 onClick={() => deleteFeedback(id)}
-                className="close"
-                style={{ color: "#fff" }}
               >
                 <FaTimes />
               </button>
             </>
           )
-        : ""}
+        : null}
 
-      <div className="text-display">{feedback.userName}</div>
-      <div className="text-display">{feedback.text}</div>
+      <div className="feedbackReviewBody">
+        <div className="feedbackUserName">{feedback.userName}</div>
+        <div className="feedbackText">{feedback.text}</div>
+      </div>
     </Card>
   );
-}
+};
+
+export default FeedbackItem;

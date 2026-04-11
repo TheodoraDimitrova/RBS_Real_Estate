@@ -21,7 +21,7 @@ export const AdvertisementsProvider = ({ children }) => {
 
   const fetchListings = async () => {
     const listingRef = collection(db, "listings");
-    const q = query(listingRef, orderBy("timestamp", "desc"), limit(10));
+    const q = query(listingRef, orderBy("timestamp", "desc"), limit(3));
     const querySnap = await getDocs(q);
 
     let ads = [];
@@ -37,30 +37,35 @@ export const AdvertisementsProvider = ({ children }) => {
     setLoading(false);
   };
   const fetchAdsByCategoryName = async (category) => {
+    setLoading(true);
     try {
       const q = query(
         collection(db, "listings"),
         where("type", "==", category),
         orderBy("timestamp", "desc"),
-        limit(10)
+        limit(10),
       );
       const querySnapshot = await getDocs(q);
-      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      const lastVisible =
+        querySnapshot.docs.length > 0
+          ? querySnapshot.docs[querySnapshot.docs.length - 1]
+          : null;
       setLastVisibleAds(lastVisible);
 
       const listings = [];
       querySnapshot.forEach((doc) => {
-        // doc.data() is never undefined for query doc snapshots
-        //   console.log(doc.id, " => ", doc.data());
         return listings.push({
           id: doc.id,
           data: doc.data(),
         });
       });
       setAds(listings);
-      setLoading(false);
     } catch (error) {
       toast.error("Something went wrong");
+      setAds([]);
+      setLastVisibleAds(null);
+    } finally {
+      setLoading(false);
     }
   };
   const onMore = async (category) => {
@@ -70,7 +75,7 @@ export const AdvertisementsProvider = ({ children }) => {
         where("type", "==", category),
         orderBy("timestamp", "desc"),
         startAfter(lastVisibleAds),
-        limit(10)
+        limit(10),
       );
       const querySnapshot = await getDocs(q);
       const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];

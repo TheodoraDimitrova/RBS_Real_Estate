@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export function useFileListPreviews(fileListLike) {
+export const useFileListPreviews = (fileListLike) => {
   const [previewUrls, setPreviewUrls] = useState([]);
 
   useEffect(() => {
@@ -25,4 +25,4 @@ export function useFileListPreviews(fileListLike) {
   }, [fileListLike]);
 
   return previewUrls;
-}
+};

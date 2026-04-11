@@ -2,11 +2,11 @@ import { motion } from "framer-motion";
 import { useContext, useEffect } from "react";
 import FeedbackContext from "../context/FeedbackContext";
 
-export default function RaitingSelect({
+const RaitingSelect = ({
   selectRatingNum,
   messageRating,
   rating,
-}) {
+}) => {
   const { feedbackEdit } = useContext(FeedbackContext);
 
   const handleChange = (e) => {
@@ -16,13 +16,13 @@ export default function RaitingSelect({
   useEffect(() => {}, [feedbackEdit]);
 
   return (
-    <div>
-      <ul className="rating">
+    <div className="feedbackRatingWrap">
+      <ul className="feedbackRating">
         {(() => {
-          let li = [];
-          for (let i = 1; i <= 10; i++) {
+          const li = [];
+          for (let i = 1; i <= 10; i += 1) {
             li.push(
-              <motion.li key={i} whileHover={{ scale: 1.2 }}>
+              <motion.li key={i} whileHover={{ scale: 1.06 }}>
                 <input
                   type="radio"
                   id={`num${i}`}
@@ -38,7 +38,11 @@ export default function RaitingSelect({
           return li;
         })()}
       </ul>
-      {messageRating && <div className="message">{messageRating}</div>}
+      {messageRating && (
+        <div className="feedbackHint feedbackHint--rating">{messageRating}</div>
+      )}
     </div>
   );
-}
+};
+
+export default RaitingSelect;

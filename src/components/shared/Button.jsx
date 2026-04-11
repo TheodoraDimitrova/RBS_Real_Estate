@@ -1,12 +1,16 @@
 import PropTypes from "prop-types";
 
-export default function Button({ children, type, isDesabled }) {
-  return (
-    <button type={type} disabled={isDesabled} className={`btn`}>
-      {children}
-    </button>
-  );
-}
+const Button = ({ children, type, isDesabled }) => (
+  <button
+    type={type}
+    disabled={isDesabled}
+    className="feedbackSubmitBtn btn-grad"
+  >
+    {children}
+  </button>
+);
+
+export default Button;
 
 Button.defaultProps = {
   type: "button",

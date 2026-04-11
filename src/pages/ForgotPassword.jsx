@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ReactComponent as ArrowRightIcon } from "../assets/svg/keyboardArrowRightIcon.svg";
 
-function ForgotPassword() {
+const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const onChange = (e) => setEmail(e.target.value);
 
@@ -46,6 +46,6 @@ function ForgotPassword() {
       </main>
     </div>
   );
-}
+};
 
 export default ForgotPassword;

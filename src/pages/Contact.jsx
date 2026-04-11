@@ -6,7 +6,7 @@ import { db } from "../firebase.config";
 import Spinner from "../components/Spinner";
 import { phoneToTelHref } from "../utils/contact";
 
-function Contact() {
+const Contact = () => {
   const [message, setMessage] = useState("");
   const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -123,6 +123,6 @@ function Contact() {
       ) : null}
     </div>
   );
-}
+};
 
 export default Contact;

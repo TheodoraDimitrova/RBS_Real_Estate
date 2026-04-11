@@ -5,8 +5,7 @@ import {
   MAX_LISTING_DESCRIPTION,
 } from "../constants/listings";
 
-/** One layout for create + edit; pages pass copy, submit handler, and `images` (create | edit). */
-function ListingAdForm({
+const ListingAdForm = ({
   pageTitle,
   pageLead,
   submitLabel,
@@ -28,7 +27,7 @@ function ListingAdForm({
     discountedPrice,
   },
   images,
-}) {
+}) => {
   const propertyId = `${ariaPrefix}-section-property`;
   const listingId = `${ariaPrefix}-section-listing`;
 
@@ -45,8 +44,8 @@ function ListingAdForm({
         <fieldset className="formFieldset">
           <legend className="formLabel">Images</legend>
           <p className="imagesInfo">
-            The first image is the cover. Up to {MAX_LISTING_IMAGES} images
-            (max 2 MB each).
+            The first image is the cover. Up to {MAX_LISTING_IMAGES} images (max
+            2 MB each).
           </p>
           {overLimit && (
             <p className="imagesLimitWarning" role="alert">
@@ -162,10 +161,7 @@ function ListingAdForm({
                 : ""}
           </p>
           {pendingCount > 0 && (
-            <ul
-              className="imagesPreviewRow"
-              aria-label="New uploads preview"
-            >
+            <ul className="imagesPreviewRow" aria-label="New uploads preview">
               {previewUrls.map((src, i) => (
                 <li key={`${src}-${i}`}>
                   <div className="imagesPreviewItem">
@@ -347,9 +343,7 @@ function ListingAdForm({
                       type="button"
                       value={true}
                       onClick={onFieldChange}
-                      className={
-                        furnished ? "formButtonActive" : "formButton"
-                      }
+                      className={furnished ? "formButtonActive" : "formButton"}
                     >
                       Yes
                     </button>
@@ -499,6 +493,6 @@ function ListingAdForm({
       </main>
     </div>
   );
-}
+};
 
 export default ListingAdForm;

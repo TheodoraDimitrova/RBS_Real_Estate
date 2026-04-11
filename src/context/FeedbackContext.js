@@ -41,7 +41,7 @@ export const FeedbackProvider = ({ children }) => {
         const q = query(
           collection(db, "feedbacks"),
           orderBy("timestamp", "desc"),
-          limit(10)
+          limit(10),
         );
         const querySnapshot = await getDocs(q);
         const ratings = [];
@@ -88,29 +88,33 @@ export const FeedbackProvider = ({ children }) => {
   };
 
   const addFeedback = async (newFeedback) => {
-    if (auth.currentUser) {
-      let newFeed = {
-        ...newFeedback,
-        timestamp: serverTimestamp(),
-        userRef: auth.currentUser.uid,
-        userName: auth.currentUser.displayName,
-      };
-      try {
-        let docRef = await addDoc(collection(db, "feedbacks"), newFeed);
-        let feed = {
-          data: newFeed,
-          id: docRef.id,
-        };
-
-        setFeedbacks([feed, ...feedbacks]);
-        toast.success("Thank you!");
-        setIsLoading(false);
-      } catch (error) {
-        toast.error(error);
-        setIsLoading(false);
-      }
-    } else {
+    if (!auth.currentUser) {
       navigate("/sign-in");
+      return false;
+    }
+
+    const newFeed = {
+      ...newFeedback,
+      timestamp: serverTimestamp(),
+      userRef: auth.currentUser.uid,
+      userName: auth.currentUser.displayName,
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, "feedbacks"), newFeed);
+      const feed = {
+        data: newFeed,
+        id: docRef.id,
+      };
+
+      setFeedbacks((prev) => [feed, ...prev]);
+      toast.success("Thank you!");
+      setIsLoading(false);
+      return true;
+    } catch (error) {
+      toast.error(error?.message ?? "Something went wrong");
+      setIsLoading(false);
+      return false;
     }
   };
 
@@ -124,14 +128,23 @@ export const FeedbackProvider = ({ children }) => {
   const updateFeedback = async (id, upItem) => {
     const updatedRef = doc(db, "feedbacks", id);
 
-    await updateDoc(updatedRef, upItem);
+    try {
+      await updateDoc(updatedRef, upItem);
 
-    let updatedFeeds = feedbacks.map((item) =>
-      item.id === id ? { ...item, data: { ...item.data, ...upItem } } : item
-    );
-
-    setFeedbacks(updatedFeeds);
-    toast.success("Successfull updated");
+      setFeedbacks((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? { ...item, data: { ...item.data, ...upItem } }
+            : item,
+        ),
+      );
+      setFeedbackEdit({ edit: false, id: null });
+      toast.success("Successfull updated");
+      return true;
+    } catch (error) {
+      toast.error(error?.message ?? "Something went wrong");
+      return false;
+    }
   };
 
   return (

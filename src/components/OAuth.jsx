@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { db } from "../firebase.config";
 import googleIcon from "../assets/svg/googleIcon.svg";
 
-function OAuth() {
+const OAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const onGoogleClick = async () => {
@@ -40,6 +40,6 @@ function OAuth() {
       </button>
     </div>
   );
-}
+};
 
 export default OAuth;

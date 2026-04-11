@@ -1,20 +1,26 @@
 import { useContext } from "react";
 import FeedbackContext from "../context/FeedbackContext";
 
-export default function FeedbackStats() {
+const FeedbackStats = () => {
   const { feedbacks } = useContext(FeedbackContext);
 
-  let avarage =
-    feedbacks.reduce((acc, cur) => {
-      return acc + cur.data.rating;
-    }, 0) / feedbacks.length;
+  const count = feedbacks?.length ?? 0;
+  const sum = (feedbacks ?? []).reduce((acc, cur) => acc + cur.data.rating, 0);
+  const average = count > 0 ? sum / count : 0;
+  const rounded = Number.isFinite(average) ? Math.round(average) : 0;
 
   return (
-    <div className="feedback-stats">
-      <h4>{feedbacks.length} Reviews</h4>
-      <h4>
-        Avarage rating: {isNaN(Math.round(avarage)) ? 0 : Math.round(avarage)}
-      </h4>
+    <div className="feedbackStats">
+      <p className="feedbackStatsItem">
+        <span className="feedbackStatsLabel">Reviews</span>
+        <span className="feedbackStatsValue">{count}</span>
+      </p>
+      <p className="feedbackStatsItem">
+        <span className="feedbackStatsLabel">Average rating</span>
+        <span className="feedbackStatsValue">{rounded}</span>
+      </p>
     </div>
   );
-}
+};
+
+export default FeedbackStats;

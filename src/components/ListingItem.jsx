@@ -2,86 +2,98 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ReactComponent as DeleteIcon } from "../assets/svg/deleteIcon.svg";
 import { ReactComponent as EditIcon } from "../assets/svg/editIcon.svg";
-import bathtubIcon from "../assets/svg/bathtubIcon.svg";
-import bedIcon from "../assets/svg/bedIcon.svg";
+import { formatEurAmount } from "../utils/formatEurAmount";
 
-export default function ListingItem({ listing, id, onDelete, onEdit }) {
+const ListingItem = ({ listing, id, onDelete, onEdit, listingLinkState }) => {
+  const basePath = `/category/${listing.type}/${id}`;
+  const to =
+    listingLinkState?.from === "profile"
+      ? `${basePath}?from=profile`
+      : basePath;
+  const addressLine = (listing.address || listing.location || "").trim();
+  const displayPrice = listing.offer ? listing.discountedPrice : listing.regularPrice;
+  const listingTypeBadgeClass = `adPageBadge adPageBadge--${
+    listing.type === "rent" ? "rent" : "sell"
+  } adPageBadge--overImage`;
+  const showToolbar = Boolean(onEdit || onDelete);
+
   return (
-    <li className="categoryListing">
-      <Link
-        to={`/category/${listing.type}/${id}`}
-        className="categoryListingLink"
-      >
-        <div className="categoryListingImgWrap">
-          <img
-            src={listing.imageUrls[0]}
-            alt={listing.name}
-            className="categoryListingImg"
-          />
-          <span className="categoryTag">
-            {listing.type === "rent" ? "Rent" : "Sale"}
-          </span>
+    <li className="profileListingCard">
+      <div className="profileListingCardInner">
+        <div className="profileListingCardMedia">
+          <Link
+            to={to}
+            state={listingLinkState}
+            className="profileListingCardImageLink"
+          >
+            <img
+              src={listing.imageUrls?.[0]}
+              alt={listing.name}
+              className="profileListingCardImg"
+            />
+            <span className={listingTypeBadgeClass}>
+              {listing.type === "rent" ? "For rent" : "For sale"}
+            </span>
+          </Link>
+          {showToolbar && (
+            <div className="profileListingCardToolbar">
+              {onEdit && (
+                <button
+                  type="button"
+                  className="profileListingIconBtn"
+                  aria-label="Edit listing"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onEdit();
+                  }}
+                >
+                  <EditIcon className="profileListingSvgIcon" />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  className="profileListingIconBtn profileListingIconBtn--danger"
+                  aria-label="Delete listing"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onDelete();
+                  }}
+                >
+                  <DeleteIcon className="profileListingSvgIcon" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
-        <div className="categoryListingDetails">
-          <p className="categoryListingLocation">{listing.location}</p>
-          <p className="categoryListingName">{listing.name}</p>
-          <p className="categoryListingPrice">
-            {listing.offer ? (
-              <>
-                <span className="oldPrice">
-                  {listing.regularPrice
-                    .toString()
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
-                  EUR
+        <Link to={to} state={listingLinkState} className="profileListingCardBodyLink">
+          <div className="profileListingCardBody">
+            <p className="profileListingCardPrice">
+              {formatEurAmount(displayPrice)} €
+              {listing.type === "rent" && (
+                <span className="profileListingCardPeriod">/mo</span>
+              )}
+            </p>
+            {listing.offer && (
+              <p className="profileListingCardOfferLine">
+                <span className="profileListingCardWas">
+                  {formatEurAmount(listing.regularPrice)} €
                 </span>
-                <span className="newPrice">
-                  {listing.discountedPrice
-                    .toString()
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
-                  EUR
-                </span>
-                <span className="offerBadge">Offer</span>
-              </>
-            ) : (
-              <>
-                {listing.regularPrice
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
-                EUR
-              </>
+                <span className="profileListingOfferPill">Offer</span>
+              </p>
             )}
-            {listing.type === "rent" && <span className="pricePeriod">/Month</span>}
-          </p>
-          <div className="categoryListingInfoDiv">
-            <img src={bedIcon} alt="icon" />
-            <p className="categoryListingInfoText">
-              {listing.bedrooms > 1
-                ? `${listing.bedrooms} Bedrooms`
-                : `${listing.bedrooms} Bedroom`}
-            </p>
-            <img src={bathtubIcon} alt="icon" />
-            <p className="categoryListingInfoText">
-              {listing.bathrooms > 1
-                ? `${listing.bathrooms} Bathrooms`
-                : `${listing.bathrooms} Bathroom`}
-            </p>
+            <h3 className="profileListingCardTitle">{listing.name}</h3>
+            {addressLine ? (
+              <p className="profileListingCardAddress">{addressLine}</p>
+            ) : null}
+            <div className="profileListingCardSpecs">
+              {listing.bedrooms} beds · {listing.bathrooms} baths
+            </div>
           </div>
-        </div>
-      </Link>
-      {onEdit && (
-        <EditIcon
-          className="editIcon"
-          fill="green"
-          onClick={() => onEdit(listing.id)}
-        />
-      )}
-      {onDelete && (
-        <DeleteIcon
-          className="removeIcon"
-          fill="rgb(231, 76, 60)"
-          onClick={() => onDelete(listing.id, listing.name)}
-        />
-      )}
+        </Link>
+      </div>
     </li>
   );
-}
+};
+
+export default ListingItem;

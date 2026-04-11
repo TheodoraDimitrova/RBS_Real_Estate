@@ -14,19 +14,20 @@ import {
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
-import arrowRightIcon from "../assets/svg/keyboardArrowRightIcon.svg";
-import homeIcon from "../assets/svg/homeIcon.svg";
+import { MdEdit, MdEmail, MdLocationOn, MdLogout } from "react-icons/md";
 import Spinner from "../components/Spinner";
 import ListingItem from "../components/ListingItem";
 import Modal from "../components/shared/Modal";
 import { deleteObject, getStorage, ref } from "firebase/storage";
+import { memberYearFromUserData } from "../utils/memberYearFromUserData";
 
-function Profile() {
+const Profile = () => {
   const navigate = useNavigate();
   const auth = getAuth();
   const [loading, setLoading] = useState(true);
   const [ads, SetAds] = useState([]);
   const [changeDetails, setChangeDetails] = useState(false);
+  const [memberSinceYear, setMemberSinceYear] = useState(null);
   const [popup, setPopup] = useState({
     show: false,
     id: null,
@@ -39,17 +40,34 @@ function Profile() {
   });
   const { name, email, phone } = formData;
 
+  const previewLocation =
+    ads[0]?.data?.address && typeof ads[0].data.address === "string"
+      ? ads[0].data.address.trim()
+      : null;
+
+  const initials =
+    (name || "?")
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?";
+
   useEffect(() => {
     const fetchUserListings = async () => {
       const userDocRef = doc(db, "users", auth.currentUser.uid);
       const userSnap = await getDoc(userDocRef);
       if (userSnap.exists()) {
         const u = userSnap.data();
+        setMemberSinceYear(memberYearFromUserData(u));
         setFormData((prev) => ({
           ...prev,
           name: u.name ?? auth.currentUser.displayName ?? prev.name,
           phone: typeof u.phone === "string" ? u.phone : "",
         }));
+      } else {
+        setMemberSinceYear(new Date().getFullYear());
       }
 
       const listingsRef = collection(db, "listings");
@@ -64,10 +82,10 @@ function Profile() {
 
       const listings = [];
 
-      querySnap.forEach((doc) => {
+      querySnap.forEach((docSnap) => {
         return listings.push({
-          id: doc.id,
-          data: doc.data(),
+          id: docSnap.id,
+          data: docSnap.data(),
         });
       });
 
@@ -125,18 +143,16 @@ function Profile() {
   };
   const handleDeleteTrue = async () => {
     handleDeleteFalse();
-    setLoading({ show: true });
-    //delete images in firebase
+    setLoading(true);
     const deleteImage = async (image) => {
       return new Promise((resolve, reject) => {
         const storage = getStorage();
         const desertRef = ref(storage, `${image}`);
         try {
           deleteObject(desertRef);
-          setLoading(false);
+          resolve();
         } catch (error) {
-          toast.error("Uh-oh, an error occurred!");
-          setLoading(false);
+          reject(error);
         }
       });
     };
@@ -144,9 +160,7 @@ function Profile() {
     const docSnap = await getDoc(docRef);
     const images = docSnap.data().imageUrls;
 
-    images.map(async (image) => {
-      await deleteImage(image);
-    });
+    await Promise.all((images || []).map((image) => deleteImage(image)));
     await deleteDoc(doc(db, "listings", popup.id));
     const updatedListings = ads.filter((ad) => ad.id !== popup.id);
     SetAds(updatedListings);
@@ -158,6 +172,13 @@ function Profile() {
     navigate(`/edit-ad/${adId}`);
   };
 
+  const toggleEditProfile = () => {
+    if (changeDetails) {
+      onSubmit();
+    }
+    setChangeDetails((prev) => !prev);
+  };
+
   if (loading) return <Spinner />;
 
   return (
@@ -167,72 +188,115 @@ function Profile() {
         handleDeleteTrue={handleDeleteTrue}
         popup={popup}
       />
-      <div className="profile">
-        <header className="profileHeader">
-          <p className="pageHeader">My Profile</p>
-          <button className="logOut btn-grad" type="button" onClick={onLogout}>
-            Logout
-          </button>
-        </header>
-        <main>
-          <div className="profileDetailsHeader">
-            <p className="profileDetailsText">Personal Details</p>
-            <p
-              className="changePersonalDetails btn-grad"
-              onClick={() => {
-                changeDetails && onSubmit();
-                setChangeDetails((prevState) => !prevState);
-              }}
-            >
-              {changeDetails ? "Done" : "Change"}
-            </p>
-          </div>
-          <div className="profileCart">
-            <form>
-              <input
-                type="text"
-                id="name"
-                className={!changeDetails ? "profileName" : "profileNameActive"}
-                disabled={!changeDetails}
-                value={name}
-                onChange={onChange}
-              />
-              <input
-                type="text"
-                id="email"
-                className="profileEmail"
-                disabled="disabled"
-                value={email}
-                onChange={onChange}
-              />
-              <p className="profileFieldHint">
-                Phone is shown to people who use &quot;Contact owner&quot; on
-                your listings.
+      <div className="profile profilePage">
+        <div className="profileLayout">
+          <aside className="profileSidebar" aria-label="Your profile">
+            <div className="profileSidebarCard">
+              <div className="profileAvatar" aria-hidden="true">
+                {initials}
+              </div>
+              <h2 className="profileSidebarName">{name || "User"}</h2>
+              <p className="profileSidebarMeta">
+                Member since {memberSinceYear ?? "—"}
               </p>
-              <input
-                type="tel"
-                id="phone"
-                className={
-                  !changeDetails ? "profilePhone" : "profilePhoneActive"
-                }
-                disabled={!changeDetails}
-                value={phone}
-                onChange={onChange}
-                autoComplete="tel"
-                placeholder="e.g. +359 88 000 0000"
-              />
-            </form>
-          </div>
-          <Link to="/create-ad" className="createListing">
-            <img src={homeIcon} alt="home" />
-            <p>Sell or Rent your home</p>
-            <img src={arrowRightIcon} alt="arrowRight" />
-          </Link>
 
-          {!loading && ads?.length > 0 && (
-            <>
-              <p className="listingsText">Your Advertismets</p>
-              <ul className="listingsList">
+              <div className="profileSidebarRows">
+                <div className="profileSidebarRow">
+                  <MdEmail className="profileSidebarIcon" aria-hidden />
+                  <span className="profileSidebarRowText">{email}</span>
+                </div>
+                {previewLocation ? (
+                  <div className="profileSidebarRow">
+                    <MdLocationOn className="profileSidebarIcon" aria-hidden />
+                    <span className="profileSidebarRowText">
+                      {previewLocation}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="profileSidebarRow profileSidebarRow--muted">
+                    <MdLocationOn className="profileSidebarIcon" aria-hidden />
+                    <span className="profileSidebarRowText">
+                      Address from your listings
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {changeDetails && (
+                <form
+                  className="profileSidebarForm"
+                  onSubmit={(e) => e.preventDefault()}
+                >
+                  <label htmlFor="name" className="profileSidebarLabel">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    className="profileSidebarInput"
+                    value={name}
+                    onChange={onChange}
+                  />
+                  <label htmlFor="email" className="profileSidebarLabel">
+                    Email
+                  </label>
+                  <input
+                    type="text"
+                    id="email"
+                    className="profileSidebarInput profileSidebarInput--disabled"
+                    disabled
+                    value={email}
+                    readOnly
+                  />
+                  <p className="profileSidebarHint">
+                    Phone is shown when someone uses Contact owner on your
+                    listings.
+                  </p>
+                  <label htmlFor="phone" className="profileSidebarLabel">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    className="profileSidebarInput"
+                    value={phone}
+                    onChange={onChange}
+                    autoComplete="tel"
+                    placeholder="+359 …"
+                  />
+                </form>
+              )}
+
+              <button
+                type="button"
+                className="profileSidebarEditBtn"
+                onClick={toggleEditProfile}
+              >
+                <MdEdit className="profileSidebarEditIcon" aria-hidden />
+                {changeDetails ? "Save profile" : "Edit profile"}
+              </button>
+
+              <button
+                type="button"
+                className="profileSidebarSignOut"
+                onClick={onLogout}
+              >
+                <MdLogout className="profileSidebarSignOutIcon" aria-hidden />
+                Sign out
+              </button>
+            </div>
+          </aside>
+
+          <main className="profileMain">
+            <div className="profileMainHeader">
+              <h1 className="profileMainTitle">My listings</h1>
+              <Link to="/create-ad" className="profileNewListingBtn">
+                + New listing
+              </Link>
+            </div>
+
+            {ads?.length > 0 ? (
+              <ul className="profileListingsGrid">
                 {ads.map((listing) => (
                   <ListingItem
                     listing={listing.data}
@@ -240,15 +304,26 @@ function Profile() {
                     key={listing.id}
                     onDelete={() => onDelete(listing.id)}
                     onEdit={() => onEdit(listing.id)}
+                    listingLinkState={{ from: "profile" }}
                   />
                 ))}
               </ul>
-            </>
-          )}
-        </main>
+            ) : (
+              <div className="profileEmptyListings">
+                <p className="profileEmptyTitle">No listings yet</p>
+                <p className="profileEmptyText">
+                  Create your first listing to appear here.
+                </p>
+                <Link to="/create-ad" className="profileEmptyCta btn-grad">
+                  + New listing
+                </Link>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </>
   );
-}
+};
 
 export default Profile;

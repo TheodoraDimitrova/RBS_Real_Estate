@@ -4,25 +4,32 @@ import { useContext } from "react";
 import FeedbackContext from "../context/FeedbackContext";
 import Spinner from "../components/Spinner";
 
-export default function FeedbackList({ deleteFeedback }) {
+const FeedbackList = ({ deleteFeedback }) => {
   const { feedbacks, isLoading } = useContext(FeedbackContext);
 
   if ((!feedbacks || feedbacks.length === 0) && !isLoading) {
-    return <p>No feedback yet</p>;
+    return (
+      <div className="feedbackEmpty" role="status">
+        <p className="feedbackEmptyTitle">No feedback yet</p>
+        <p className="feedbackEmptyText">
+          Be the first to leave a rating and a short review.
+        </p>
+      </div>
+    );
   }
 
   return isLoading ? (
     <Spinner />
   ) : (
-    <div className="feedback-list">
+    <div className="feedbackList">
       <AnimatePresence>
         {feedbacks.map((item) => (
           <motion.div
             key={item.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, x: "-1000px" }}
-            transition={{ delay: 0.1, duration: 1 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.25 }}
           >
             <FeedbackItem
               key={item.id}
@@ -35,4 +42,6 @@ export default function FeedbackList({ deleteFeedback }) {
       </AnimatePresence>
     </div>
   );
-}
+};
+
+export default FeedbackList;

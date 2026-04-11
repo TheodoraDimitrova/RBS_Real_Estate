@@ -15,8 +15,9 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.config";
 import { useFileListPreviews } from "../hooks/useFileListPreviews";
 import { MAX_LISTING_IMAGES } from "../constants/listings";
+import { isOfferDiscountInvalid } from "../utils/offerPriceValidation";
 
-function EditAd() {
+const EditAd = () => {
   const [loading, setLoading] = useState(true);
   const [imageUrls, setImageUrls] = useState([]);
   const navigate = useNavigate();
@@ -84,8 +85,8 @@ function EditAd() {
         const desertRef = ref(storage, `${urlImage}`);
         try {
           await deleteObject(desertRef);
-        } catch (error) {
-          console.log(error);
+        } catch {
+          /* file may already be missing from storage */
         }
       };
       await delFromStore();
@@ -105,14 +106,10 @@ function EditAd() {
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    if (offer) {
-      const reg = Number(regularPrice);
-      const disc = Number(discountedPrice);
-      if (Number.isFinite(reg) && Number.isFinite(disc) && disc >= reg) {
-        setLoading(false);
-        toast.error("Discounted Price needs to be less than regular Price");
-        return;
-      }
+    if (offer && isOfferDiscountInvalid(regularPrice, discountedPrice)) {
+      setLoading(false);
+      toast.error("Discounted Price needs to be less than regular Price");
+      return;
     }
 
     if (Array.isArray(images) && images.length > 0) {
@@ -133,20 +130,7 @@ function EditAd() {
           const uploadTask = uploadBytesResumable(storageRef, image);
           uploadTask.on(
             "state_changed",
-            (snapshot) => {
-              const progress =
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              console.log("Upload is " + progress + "% done");
-              //eslint-disable-next-line
-              switch (snapshot.state) {
-                case "paused":
-                  console.log("Upload is paused");
-                  break;
-                case "running":
-                  console.log("Upload is running");
-                  break;
-              }
-            },
+            () => {},
             (error) => {
               reject(error);
             },
@@ -311,6 +295,6 @@ function EditAd() {
       }}
     />
   );
-}
+};
 
 export default EditAd;

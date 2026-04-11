@@ -1,52 +1,96 @@
 import React, { useContext, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import ListingItem from "../components/ListingItem";
-import Spinner from "../components/Spinner";
 import AdvertisementsContext from "../context/AdvertisementsContext";
 
-export default function Category() {
+const Category = () => {
   const { loading, ads, fetchAdsByCategoryName, lastVisibleAds, onMore } =
     useContext(AdvertisementsContext);
 
   const params = useParams();
+  const categoryName = params.categoryName;
+  const isRent = categoryName === "rent";
 
   useEffect(() => {
-    fetchAdsByCategoryName(params.categoryName);
-    // eslint-disable-next-line
-  }, []);
+    if (categoryName) {
+      fetchAdsByCategoryName(categoryName);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- context fetch when route param changes
+  }, [categoryName]);
+
+  const title = isRent ? "Places for rent" : "Places for sale";
+  const lead = isRent
+    ? "Browse rental homes and apartments — open a listing for full details."
+    : "Browse properties listed for purchase — open a listing for full details.";
+
+  const count = ads?.length ?? 0;
 
   return (
-    <div className="category">
-      <header>
-        <p className="pageHeader">
-          {params.categoryName === "rent"
-            ? "Places for Rent"
-            : "Places for Sale"}
-        </p>
-      </header>
-      {loading ? (
-        <Spinner />
-      ) : ads && ads.length > 0 ? (
-        <>
-          <main>
-            <ul className="categoryListings">
-              {ads.map((item) => (
-                <ListingItem key={item.id} listing={item.data} id={item.id} />
-              ))}
-            </ul>
-          </main>
-          {lastVisibleAds && (
-            <p
-              className="loadMore btn-grad"
-              onClick={() => onMore(params.categoryName)}
-            >
-              Load More
-            </p>
+    <div className="categoryPage">
+      <header className="offersHero">
+        <div className="offersHeroCard">
+          <div className="offersHeroRow">
+            <h1 className="offersTitle">{title}</h1>
+            {!loading && count > 0 && (
+              <span className="offersCountPill" aria-label={`${count} listings`}>
+                {count}
+              </span>
+            )}
+          </div>
+          <p className="offersLead">{lead}</p>
+          {!loading && count > 0 && lastVisibleAds && (
+            <p className="offersHint">Use “Load more” for older listings.</p>
           )}
-        </>
+        </div>
+      </header>
+
+      {loading ? (
+        <div
+          className="categorySkeleton"
+          aria-busy="true"
+          aria-label="Loading listings"
+        />
+      ) : count > 0 ? (
+        <main>
+          <ul className="profileListingsGrid">
+            {ads.map((item) => (
+              <ListingItem key={item.id} listing={item.data} id={item.id} />
+            ))}
+          </ul>
+          {lastVisibleAds && (
+            <button
+              type="button"
+              className="categoryLoadMore btn-grad"
+              onClick={() => onMore(categoryName)}
+            >
+              Load more
+            </button>
+          )}
+        </main>
       ) : (
-        <p>No Advertisements for {params.categoryName}</p>
+        <div className="categoryEmpty" role="status">
+          <div className="categoryEmptyCard">
+            <p className="categoryEmptyTitle">No listings in this category yet</p>
+            <p className="categoryEmptyText">
+              Try the other category or go back to the home page — new
+              properties are added regularly.
+            </p>
+            <div className="categoryEmptyActions">
+              <Link
+                to={isRent ? "/category/sell" : "/category/rent"}
+                className="categoryEmptyCta btn-grad"
+              >
+                {isRent ? "Browse for sale" : "Browse for rent"}
+              </Link>
+              <Link to="/" className="categoryEmptyLink">
+                Back to home
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
-}
+};
+
+export default Category;
